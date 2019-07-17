@@ -44,14 +44,17 @@ def playAudioFromUrl(url):
 
 def handleCommand(command):
 	if "!play" in command:
-		url = command.split("!play ", 1)[1]
-		url = url.replace("[URL]", "") 
-		url = url.replace("[/URL]", "")
-		playAudioFromUrl(url)
-		print("playing: " + url)
-	elif "!resume" in command:
-		player.play()
-		print("resumed")
+		tempurl = command
+		tempurl = tempurl.replace("[URL]", "") 
+		tempurl = tempurl.replace("[/URL]", "")
+		l = tempurl.split("!play ", 1)
+		if len(l) > 1:
+			url = l[1]
+			playAudioFromUrl(url)
+			print("playing: " + url)
+		else:
+			player.play()
+			print("resumed")	
 	elif "!pause" in command:
 		player.pause()
 		print("paused")
