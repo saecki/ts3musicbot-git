@@ -4,23 +4,57 @@ import os
 import asyncio
 import time
 import json
+import re
 
-class Playlist:
+Instance = vlc.Instance()
+player = Instance.media_player_new()
 
-	songURLs = []
+class Commands:
+	play = "!play"
+	pause = "!pause"
+	next = "!next"
+	previous = "!prev"
+	stop = "!stop"
+	clear = "!clear"
+	
+	queue = "!queue"
+	queuePlay = "play:"
+
+	playlist = "!playlist"
+	playlistCreate = "create:"
+	playlistAdd = "add:"
+	playlistTo = "to:"
+	playlistList = "list"
+	playlistQueue = "queue:"
+	playlistReplace = "replace"
+
+class Command:
 
 	def __init__(self, name):
 		self.name = name
+		self.args = []
 
-	def addSong(songURL):
+class Argument:
+
+	def __init__(self, name, value = None):
+		self.name = name
+		self.value = value
+
+class Playlist:
+
+	def __init__(self, name):
+		self.name = name
+		self.songURLs = []
+
+	def addSong(self, songURL):
 		self.songURLs.append(songURL)
 
-	def toJSON():
+	def toJSON(self):
 		playlist = {}
 		playlist["name"] = self.name
 		playlist["songURLs"] = []
-		for songURL in songURLs:
-			playlist["songURLs"].append({"songURL": song})
+		for songURL in self.songURLs:
+			playlist["songURLs"].append({"songURL": songURL})
 
 		return playlist
 
@@ -31,18 +65,12 @@ def jsonToPlaylist(json):
 
 	return playlist
 
-Instance = vlc.Instance()
-player = Instance.media_player_new()
-
-def getAllSubdirsOf(b='.'):
-	result = []
-	for d in os.listdir(b):
-		bd = os.path.join(b, d)
-		if os.path.isdir(bd): result.append(bd)
-	return result
+#
+#file system
+#
 
 def getTS3ChannelChatFilePath():
-	p = os.getenv('APPDATA')
+	p = os.getenv("APPDATA")
 	p += os.path.sep
 	p += "TS3Client\\chats"
 
@@ -55,12 +83,93 @@ def getTS3ChannelChatFilePath():
 
 	return path
 
+def getConfigFolderPath():
+	path = os.getenv("APPDATA")
+	path += os.path.sep
+	path += "TS3MusicBot"
+
+	return path
+
+def getConfigFilePath():
+	path = getConfigFolderPath()
+	if len(path) > 0:
+		path += os.path.sep
+	path += "config.json"
+
+	return path
+
+def getAllSubdirsOf(b="."):
+	result = []
+	for d in os.listdir(b):
+		bd = os.path.join(b, d)
+		if os.path.isdir(bd): result.append(bd)
+	return result
+
 def getFileLineCount(path):
     return sum(1 for line in open(path))
 
+def writeData():
+
+	data = {}
+	data["playlists"] = []
+
+	for p in playlists:
+		data["playlists"].append(p.toJSON())
+	try:
+		with open(getConfigFilePath(), "w") as jsonfile:
+			json.dump(data, jsonfile)
+	except:
+		print("couldn't write data")
+
+def readData():
+	global playlists
+
+	try:
+		with open(getConfigFilePath()) as jsonfile:  
+			data = json.load(jsonfile)
+			for p in data["playlists"]:
+				playlists.append(jsonToPlaylist(p))
+
+	except:
+		print("couldn't read config file")
+
+		#trying to create the conifg folder
+		try:
+			os.mkdir(getConfigFolderPath())
+		except FileExistsError:	
+			print("config folder existed")
+
+#
+#url
+#
+
+def isURL(string):
+	if "[URL]" in string and "[/URL]" in string:
+		return True
+	else:
+		return False
+
+def getURL(string):
+	url = string
+	url = url.replace("[URL]", "")
+	url = url.replace("[/URL]", "")
+
+	return url
+
+def isYoutubeURL(url):
+	if "youtu.be" in url or "youtube.com" in url:
+		return True
+	else:
+		print("no valid youtube link")
+		return False
+
+#
+#playback
+#
+
 def playSong():
-	if index < len(queue):
-		playAudioFromUrl(queue[index])
+	if index < len(songQueue):
+		playAudioFromUrl(songQueue[index])
 
 def playAudioFromUrl(url):
 	video = pafy.new(url)
@@ -73,69 +182,38 @@ def playAudioFromUrl(url):
 	player.play()
 	print("playing " + url)
 
-def handleCommand(command):
-
-	print(command)
-
-	if "!playqueue" in command:
-		playQueue(command)
-	elif "!play" in command:
-		play(command)
-	elif "!pause" in command:
-		pause()
-	elif "!stop" in command:
-		stop()
-	elif "!prev" in command:
-		previous()
-	elif "!next" in command:
-		next()
-	elif "!clear" in command:
-		clear()
-	elif "!seek" in command:
-		seek(command)
-	else:
-		print("The command: " + command + "has a wrong syntax")
+#
+#queue
+#
 
 def play(command):
-	tempurl = command
-	tempurl = tempurl.replace("[URL]", "") 
-	tempurl = tempurl.replace("[/URL]", "")
-	l = tempurl.split("!play ", 1)
-	if len(l) > 1:
-		url = l[1]
-		print(url)
-		if "youtu.be" in url or "youtube" in url:
-			queue.append(url)
-			print("added " + url + "to the queue")
+
+	if len(command.args) > 0:
+		if isURL(command.args[0].name):
+			url = getURL(command.args[0].name)
+			if isYoutubeURL(url):
+				songQueue.append(url)
+				print("added " + url + " to the queue")
+				if player.get_state() == vlc.State.NothingSpecial or player.get_state() == vlc.State.Stopped:
+					playSong()
+			else:
+				print("specified value is no youtube url")
 		else:
-			print("no valid youtube link")
-	else:
+			#search for song on youtube
+			pass
+	elif player.get_state() == vlc.State.Paused:
 		player.play()
 		print("resumed")
-
-def playQueue(command):
-	global index
-	l = command.split("!playqueue ", 1)
-	if len(l) > 1:
-		tempindex = int(l[1]) - 1
-		if tempindex >= 0 and tempindex < len(queue):
-			index = tempindex
-			playSong()
-			print("playing queue at index " + str(index))
-		else:
-			print("index out of bounds")
+	else:
+		playSong()
 
 def pause():
 	player.pause()
 	print("paused")
 
-def stop():
-	player.stop()
-	index += 1
-	print("stopped")
-
 def previous():
 	global index
+
 	if index > 0:
 		player.stop()
 		index -= 1
@@ -146,35 +224,197 @@ def previous():
 
 def next():
 	global index
+
 	player.stop()
-	if index < len(queue) - 1:
+	if index < len(songQueue) - 1:
 		index += 1 
 		print("next song")
 		playSong()
 	else:
-		print("already playing last song")
+		print("already played last song")
+
+def stop():
+	global index
+
+	player.stop()
+	if index < len(songQueue) - 1:
+		index += 1
+	print("stopped")
 
 def clear():
-	queue.clear()
+	songQueue.clear()
 	index = 0
 
-def seek(command):
-	pass
+def queue(command):
+	global index
+
+	if len(command.args) > 0:
+		if command.args[0].name == Commands.queuePlay:
+			tempIndex = int(command.args[0].value)
+			if tempIndex >= 0 and tempIndex < len(songQueue):
+				index = tempIndex
+				playSong()
+				print("playing queue at index " + str(index))
+			else:
+				print("index out of bounds")
+
+#
+#playlist
+#
+
+def playlist(command):
+	if len(command.args) > 0:
+		if command.args[0].name == Commands.playlistCreate:
+			playlistCreate(command.args[0])
+		elif command.args[0].name == Commands.playlistAdd:
+			playlistAdd(command.args)
+		elif command.args[0].name == Commands.playlistQueue:
+			playlistQueue(command.args)
+		elif command.args[0].name == Commands.playlistList:
+			playlistList()
+		else:
+			print("argument " + command.args[0].name + " not found")
+		writeData()
+	else:
+		print("not enough arguments")
+
+def playlistCreate(arg):
+	playlists.append(Playlist(arg.value))
+	print("created playlist " + arg.value)
+
+def playlistAdd(args):
+
+	if len(args) > 1:
+		if args[1].name == Commands.playlistTo:			
+			
+			for p in playlists:
+				if p.name == args[1].value:					
+					if isURL(args[0].value):
+						url = getURL(args[0].value)
+
+						if isYoutubeURL(url):
+							p.addSong(url)
+							print("added " + url + "to " + p.name)
+						else:
+							print("specified value is no youtube url")
+					else:
+						print("specified value is no url")
+					
+					return
+			print("playlist not found")
+		else:
+			print("specified argument not correct")
+	else:
+		print("not enough arguments")
+
+def playlistQueue(args):
+	global songQueue
+
+	if len(args) > 0:
+
+		for p in playlists:
+			if p.name == args[0].value:
+				if len(args) > 1:
+					if args[1].name == Commands.playlistReplace:
+						songQueue = p.songURLs.copy()
+						print("replaced the queue with " + p.name)
+					else:
+						print("specified argument not correct")
+				else:
+					songQueue = songQueue + p.songURLs
+					print("added songs from " + p.name + " to the queue")
+
+				return
+		print("playlist not found")
+	else:
+		print("not enough arguments")
+
+
+def playlistList():
+	print("playlists:")
+	for p in playlists:
+		print()
+		print(p.name)
+		for s in p.songURLs:
+			print("   " + s)
+
+#
+#commands
+#
+
+def stringToCommand(string):
+
+	string = re.sub("<.*?: ","", string)
+	string = string.rstrip()
+
+	fields = string.split(" ")
+
+	if len(fields) > 0:
+		commandName = fields[0]
+
+		command = Command(commandName)
+
+		lastArg = None
+		value = False
+		
+		for i in range(1, len(fields)):
+			
+			if value:	
+				lastArg.value = fields[i]
+				command.args.append(lastArg)
+
+				value = False
+			else:
+				lastArg = Argument(fields[i])
+				
+				if fields[i].endswith(":"):
+					value = True
+				else:
+					command.args.append(lastArg)
+
+		return command
+
+	else:
+		return None
+
+def handleCommand(string):
+
+	command = stringToCommand(string)
+
+	if not command == None:
+		if command.name == Commands.play:
+			play(command)
+		elif command.name == Commands.pause:
+			pause()
+		elif command.name == Commands.previous:
+			prev()
+		elif command.name == Commands.next:
+			next()
+		elif command.name == Commands.stop:
+			stop()
+		elif command.name == Commands.clear:
+			clear()
+		elif command.name == Commands.queue:
+			queue(command)
+		elif command.name == Commands.playlist:
+			playlist(command)
+		else:
+			print("the command: " + command.name + " wasn't found")
+	else:
+		print("wow that's impressive")
+
 
 async def mainLoop():
 	global lastLine
 	while True:
 		currentLine = getFileLineCount(getTS3ChannelChatFilePath())
 		if  currentLine > lastLine:
-			lastLine = currentLine
 			with open(getTS3ChannelChatFilePath()) as f:
 				for line in f:
 					pass
 				command = line
 				handleCommand(command)
-
-		if player.get_state() == vlc.State.NothingSpecial:
-			playSong()
+				lastLine = currentLine
 		elif player.get_state() == vlc.State.Ended:
 			next()
 
@@ -182,7 +422,9 @@ async def mainLoop():
 
 playlists = []
 
-queue = []
+readData()
+
+songQueue = []
 index = 0
 
 lastLine = getFileLineCount(getTS3ChannelChatFilePath())
