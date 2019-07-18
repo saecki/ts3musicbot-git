@@ -1,6 +1,6 @@
 # Teamspeak3MusicBot
 
-## Syntax
+## Usage
 
 | Function                                         | Command |              
 | ---                                              | --- | 
