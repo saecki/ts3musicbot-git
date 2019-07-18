@@ -64,7 +64,7 @@ def playNextSong():
 
 def playAudioFromUrl(url):
 	video = pafy.new(url)
-	best = video.getbest()
+	best = video.getbestaudio()
 	playurl = best.url
 	
 	Media = Instance.media_new(playurl)
