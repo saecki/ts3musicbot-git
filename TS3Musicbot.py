@@ -194,7 +194,7 @@ def play(command):
 			if isYoutubeURL(url):
 				songQueue.append(url)
 				print("added " + url + " to the queue")
-				if player.get_state() == vlc.State.NothingSpecial or player.get_state() == vlc.State.Stopped:
+				if not player.get_state() == vlc.State.Playing:
 					playSong()
 			else:
 				print("specified value is no youtube url")
@@ -242,6 +242,7 @@ def stop():
 	print("stopped")
 
 def clear():
+	stop()
 	songQueue.clear()
 	index = 0
 
@@ -316,7 +317,9 @@ def playlistQueue(args):
 			if p.name == args[0].value:
 				if len(args) > 1:
 					if args[1].name == Commands.playlistReplace:
+						clear()
 						songQueue = p.songURLs.copy()
+						playSong()
 						print("replaced the queue with " + p.name)
 					else:
 						print("specified argument not correct")
