@@ -58,7 +58,7 @@ def getTS3ChannelChatFilePath():
 def getFileLineCount(path):
     return sum(1 for line in open(path))
 
-def playNextSong():
+def playSong():
 	if index < len(queue):
 		playAudioFromUrl(queue[index])
 
@@ -89,6 +89,8 @@ def handleCommand(command):
 		previous()
 	elif "!next" in command:
 		next()
+	elif "!clear" in command:
+		clear()
 	elif "!seek" in command:
 		seek(command)
 	else:
@@ -101,8 +103,11 @@ def play(command):
 	l = tempurl.split("!play ", 1)
 	if len(l) > 1:
 		url = l[1]
-		queue.append(url)
-		print("added " + url + "to the queue")
+		if "youtu.be" in url or youtube in url:
+			queue.append(url)
+			print("added " + url + "to the queue")
+		else:
+			print("no valid youtube link")
 	else:
 		player.play()
 		print("resumed")
@@ -114,7 +119,7 @@ def playQueue(command):
 		tempindex = int(l[1]) - 1
 		if tempindex >= 0 and tempindex < len(queue):
 			index = tempindex
-			playNextSong()
+			playSong()
 			print("playing queue at index " + str(index))
 		else:
 			print("index out of bounds")
@@ -125,6 +130,7 @@ def pause():
 
 def stop():
 	player.stop()
+	index += 1
 	print("stopped")
 
 def previous():
@@ -133,7 +139,7 @@ def previous():
 		player.stop()
 		index -= 1
 		print("previous song")
-		playNextSong()
+		playSong()
 	else:
 		print("already playing first song")
 
@@ -143,9 +149,13 @@ def next():
 	if index < len(queue) - 1:
 		index += 1 
 		print("next song")
-		playNextSong()
+		playSong()
 	else:
 		print("already playing last song")
+
+def clear()
+	queue.clear()
+	index = 0
 
 def seek(command):
 	pass
@@ -163,7 +173,7 @@ async def mainLoop():
 				handleCommand(command)
 
 		if player.get_state() == vlc.State.NothingSpecial:
-			playNextSong()
+			playSong()
 		elif player.get_state() == vlc.State.Ended:
 			next()
 
