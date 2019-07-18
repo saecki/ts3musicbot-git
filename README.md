@@ -11,4 +11,5 @@
 | playing the next song                            | !next |
 | playing the previous song                        | !prev |
 | stopping the song                                | !stop |
+| clearing the queue                               | !clear |
 
