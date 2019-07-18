@@ -153,7 +153,7 @@ def next():
 	else:
 		print("already playing last song")
 
-def clear()
+def clear():
 	queue.clear()
 	index = 0
 
