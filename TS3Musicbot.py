@@ -103,7 +103,8 @@ def play(command):
 	l = tempurl.split("!play ", 1)
 	if len(l) > 1:
 		url = l[1]
-		if "youtu.be" in url or youtube in url:
+		print(url)
+		if "youtu.be" in url or "youtube" in url:
 			queue.append(url)
 			print("added " + url + "to the queue")
 		else:
