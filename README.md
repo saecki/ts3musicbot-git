@@ -4,8 +4,8 @@
 
 | Function                                         | Command |              
 | ---                                              | --- | 
-| playing a song from youtube                      | !play example.url |
-| playing the same song again or resuming the song | !play |
+| adding a song to the queue                       | !play example.url |
+| resuming the song                                | !play |
 | playign a song at a certain index in the queue   | !playqueue 3 |
 | pausing the song                                 | !pause |
 | playing the next song                            | !next |
