@@ -1,10 +1,12 @@
 # Teamspeak3MusicBot
 
 ## Usage
+
 ### Syntax
 command arg1: value1 arg2 arg3: value3
 
 
+###Commands
 | Function                                         | Command |              
 | ---                                              | --- | 
 | adding a song to the queue                       | !play youtube.url |

@@ -6,6 +6,8 @@ import time
 import json
 import re
 import random
+import urllib.request
+from bs4 import BeautifulSoup
 
 Instance = vlc.Instance()
 player = Instance.media_player_new()
@@ -71,6 +73,18 @@ def jsonToPlaylist(json):
 		playlist.addSong(songURL["songURL"])
 
 	return playlist
+
+#
+#mathstuff
+#
+
+def getNumberBetween(number, min, max):
+	if number < min:
+		return min
+	elif number > max:
+		return max
+	else:
+		return number
 
 #
 #file system
@@ -170,6 +184,25 @@ def isYoutubeURL(url):
 		print("no valid youtube link")
 		return False
 
+def getBestYoutubeAudioURL(url):
+	video = pafy.new(url)
+	best = video.getbestaudio()
+	playurl = best.url
+
+	return playurl
+
+def getYoutubeURLFromString(string):
+	
+	query = urllib.parse.quote(string)
+	url = "https://www.youtube.com/results?search_query=" + query
+	response = urllib.request.urlopen(url)
+	html = response.read()
+	soup = BeautifulSoup(html, 'html.parser')
+	
+	for vid in soup.findAll(attrs={'class':'yt-uix-tile-link'}):
+		return 'https://www.youtube.com' + vid['href']
+	return None
+
 #
 #playback
 #
@@ -179,9 +212,7 @@ def playSong():
 		playAudioFromUrl(songQueue[index])
 
 def playAudioFromUrl(url):
-	video = pafy.new(url)
-	best = video.getbestaudio()
-	playurl = best.url
+	playurl = getBestYoutubeAudioURL(url)
 	
 	Media = Instance.media_new(playurl)
 	Media.get_mrl()
@@ -201,13 +232,26 @@ def play(command):
 			if isYoutubeURL(url):
 				songQueue.append(url)
 				print("added " + url + " to the queue")
-				if not player.get_state() == vlc.State.Playing:
+				if not player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused:
 					playSong()
 			else:
 				print("specified value is no youtube url")
 		else:
-			#search for song on youtube
-			pass
+			string = ""
+			for arg in command.args:
+				string += arg.name + " "
+			
+			print(string)
+
+			url = getYoutubeURLFromString(string)
+			
+			if not url == None:
+				songQueue.append(url)
+				print("added " + url + " to the queue")
+				if not player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused:
+					playSong()
+			else:
+				print("couldn't find any video")
 	elif player.get_state() == vlc.State.Paused:
 		player.play()
 		print("resumed")
@@ -222,8 +266,11 @@ def previous():
 	global index
 
 	if index > 0:
-		player.stop()
 		index -= 1
+		print("previous song")
+		playSong()
+	elif repeatSong == 2:
+		index = len(songQueue) - 1
 		print("previous song")
 		playSong()
 	else:
@@ -235,6 +282,10 @@ def next():
 	player.stop()
 	if index < len(songQueue) - 1:
 		index += 1 
+		print("next song")
+		playSong()
+	elif repeatSong == 2:
+		index = 0
 		print("next song")
 		playSong()
 	else:
@@ -280,12 +331,9 @@ def queue(command):
 	if len(command.args) > 0:
 		if command.args[0].name == Commands.queuePlay:
 			tempIndex = int(command.args[0].value)
-			if tempIndex >= 0 and tempIndex < len(songQueue):
-				index = tempIndex
-				playSong()
-				print("playing queue at index " + str(index))
-			else:
-				print("index out of bounds")
+			index = getNumberBetween(tempIndex, 0, len(songQueue) - 1)
+			playSong()
+			print("playing queue at index " + str(index))
 		else:
 			print("argument " + command.args[0].name + " not found")
 #
@@ -426,7 +474,7 @@ def handleCommand(string):
 		elif command.name == Commands.pause:
 			pause()
 		elif command.name == Commands.previous:
-			prev()
+			previous()
 		elif command.name == Commands.next:
 			next()
 		elif command.name == Commands.stop:
