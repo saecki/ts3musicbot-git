@@ -30,6 +30,7 @@ class Commands:
 
 	playlist = "!playlist"
 	playlistCreate = "create:"
+	playlistFrom = "from:"
 	playlistAdd = "add:"
 	playlistTo = "to:"
 	playlistQueue = "queue:"
@@ -75,7 +76,7 @@ def jsonToPlaylist(json):
 	return playlist
 
 #
-#mathstuff
+#maths stuff
 #
 
 def getNumberBetween(number, min, max):
@@ -212,13 +213,16 @@ def playSong():
 		playAudioFromUrl(songQueue[index])
 
 def playAudioFromUrl(url):
-	playurl = getBestYoutubeAudioURL(url)
-	
-	Media = Instance.media_new(playurl)
-	Media.get_mrl()
-	player.set_media(Media)
-	player.play()
-	print("playing " + url)
+	try:
+		playurl = getBestYoutubeAudioURL(url)
+		
+		Media = Instance.media_new(playurl)
+		Media.get_mrl()
+		player.set_media(Media)
+		player.play()
+		print("playing " + url)
+	except:
+		print("couldn't play song with url " + url)
 
 #
 #queue
@@ -240,8 +244,6 @@ def play(command):
 			string = ""
 			for arg in command.args:
 				string += arg.name + " "
-			
-			print(string)
 
 			url = getYoutubeURLFromString(string)
 			
@@ -343,7 +345,7 @@ def queue(command):
 def playlist(command):
 	if len(command.args) > 0:
 		if command.args[0].name == Commands.playlistCreate:
-			playlistCreate(command.args[0])
+			playlistCreate(command.args)
 		elif command.args[0].name == Commands.playlistAdd:
 			playlistAdd(command.args)
 		elif command.args[0].name == Commands.playlistQueue:
@@ -358,20 +360,36 @@ def playlist(command):
 	else:
 		print("not enough arguments")
 
-def playlistCreate(arg):
-	playlists.append(Playlist(arg.value))
-	print("created playlist " + arg.value)
+def playlistCreate(args):
+	if len(args) > 1:
+		if args[1].name == Commands.playlistFrom:
+			if args[1].value == "queue":
+				playlist = Playlist(args[0].value)
+				playlist.songURLs = songQueue.copy()
+				playlists.append(playlist)
+				print("created playlist " + args[0].value + " from queue")
+			else:
+				for p in playlists:
+					if p.name == args[1].value:
+						playlist = Playlist(args[0].value)
+						playlist.songURLs = p.songURLs.copy()
+						playlists.append(playlist)
+						print("created playlist " + args[0].value + " from " + args[1].value)
+						return
+				print("couldn't find playlist")
+		else:
+			print("specified argument not correct")
+	else:
+		playlists.append(Playlist(args[0].value))
+		print("created playlist " + args[0].value)
 
 def playlistAdd(args):
-
 	if len(args) > 1:
 		if args[1].name == Commands.playlistTo:			
-			
 			for p in playlists:
 				if p.name == args[1].value:					
 					if isURL(args[0].value):
 						url = getURL(args[0].value)
-
 						if isYoutubeURL(url):
 							p.addSong(url)
 							print("added " + url + "to " + p.name)
@@ -379,7 +397,6 @@ def playlistAdd(args):
 							print("specified value is no youtube url")
 					else:
 						print("specified value is no url")
-					
 					return
 			print("playlist not found")
 		else:
