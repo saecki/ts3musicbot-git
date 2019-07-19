@@ -5,6 +5,7 @@ import asyncio
 import time
 import json
 import re
+import random
 
 Instance = vlc.Instance()
 player = Instance.media_player_new()
@@ -16,7 +17,12 @@ class Commands:
 	previous = "!prev"
 	stop = "!stop"
 	clear = "!clear"
-	
+	shuffle = "!shuffle"
+
+	repeat = "!repeat"
+	repeatAll = "all"
+	repeatStop = "stop"
+
 	queue = "!queue"
 	queuePlay = "play:"
 
@@ -24,9 +30,10 @@ class Commands:
 	playlistCreate = "create:"
 	playlistAdd = "add:"
 	playlistTo = "to:"
-	playlistList = "list"
 	playlistQueue = "queue:"
 	playlistReplace = "replace"
+	playlistShuffle = "shuffle:"
+	playlistList = "list"
 
 class Command:
 
@@ -245,6 +252,27 @@ def clear():
 	stop()
 	songQueue.clear()
 	index = 0
+	print("cleared queue")
+
+def shuffle():
+	random.shuffle(songQueue)
+	print("shuffled queue")
+
+def repeat(command):
+	global repeatSong
+
+	if len(command.args) > 0:
+		if command.args[0].name == Commands.repeatAll:
+			repeatSong = 2
+			print("repeating all songs")
+		elif command.args[0].name == Commands.repeatStop:
+			repeatSong = 0
+			print("stopped repeating")
+		else:
+			print("argument " + command.args[0].name + " not found")
+	else:
+		repeatSong = 1
+		print("repeating one song")
 
 def queue(command):
 	global index
@@ -258,7 +286,8 @@ def queue(command):
 				print("playing queue at index " + str(index))
 			else:
 				print("index out of bounds")
-
+		else:
+			print("argument " + command.args[0].name + " not found")
 #
 #playlist
 #
@@ -271,6 +300,8 @@ def playlist(command):
 			playlistAdd(command.args)
 		elif command.args[0].name == Commands.playlistQueue:
 			playlistQueue(command.args)
+		elif command.args[0].name == Commands.playlistShuffle:
+			playlistShuffle(command.args)
 		elif command.args[0].name == Commands.playlistList:
 			playlistList()
 		else:
@@ -311,27 +342,32 @@ def playlistAdd(args):
 def playlistQueue(args):
 	global songQueue
 
-	if len(args) > 0:
-
-		for p in playlists:
-			if p.name == args[0].value:
-				if len(args) > 1:
-					if args[1].name == Commands.playlistReplace:
-						clear()
-						songQueue = p.songURLs.copy()
-						playSong()
-						print("replaced the queue with " + p.name)
-					else:
-						print("specified argument not correct")
+	for p in playlists:
+		if p.name == args[0].value:
+			if len(args) > 1:
+				if args[1].name == Commands.playlistReplace:
+					clear()
+					songQueue = p.songURLs.copy()
+					print("replaced the queue with " + p.name)
+					playSong()
 				else:
-					songQueue = songQueue + p.songURLs
-					print("added songs from " + p.name + " to the queue")
+					print("specified argument not correct")
+			else:
+				songQueue = songQueue + p.songURLs
+				print("added songs from " + p.name + " to the queue")
+				if not player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused:
+					playSong()
 
-				return
-		print("playlist not found")
-	else:
-		print("not enough arguments")
+			return
+	print("playlist not found")
 
+def playlistShuffle(args):
+	for p in playlists:
+		if p.name == args[0].value:
+			random.shuffle(p.songURLs)
+			print("shuffled playlist")
+			return
+	print("playlist not found")
 
 def playlistList():
 	print("playlists:")
@@ -397,6 +433,10 @@ def handleCommand(string):
 			stop()
 		elif command.name == Commands.clear:
 			clear()
+		elif command.name == Commands.shuffle:
+			shuffle()
+		elif command.name == Commands.repeat:
+			repeat(command)
 		elif command.name == Commands.queue:
 			queue(command)
 		elif command.name == Commands.playlist:
@@ -419,7 +459,16 @@ async def mainLoop():
 				handleCommand(command)
 				lastLine = currentLine
 		elif player.get_state() == vlc.State.Ended:
-			next()
+			if repeatSong == 0:
+				next()
+			if repeatSong == 1:
+				playSong()
+			elif repeatSong == 2:
+				if index >= len(songQueue) - 1:
+					index = 0
+					playSong()
+				else:
+					next()
 
 		await asyncio.sleep(0.5)
 
@@ -429,6 +478,7 @@ readData()
 
 songQueue = []
 index = 0
+repeatSong = 0
 
 lastLine = getFileLineCount(getTS3ChannelChatFilePath())
 
