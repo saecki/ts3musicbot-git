@@ -497,6 +497,8 @@ def handleCommand(string):
 
 async def mainLoop():
 	global lastLine
+	global index
+
 	while True:
 		currentLine = getFileLineCount(getTS3ChannelChatFilePath())
 		if  currentLine > lastLine:
