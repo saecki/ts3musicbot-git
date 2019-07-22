@@ -10,33 +10,36 @@ import urllib.request
 from bs4 import BeautifulSoup
 
 class Commands:
-	play = "!play"
-	playNext = "!playnext"
-	playNow = "!playnow"
-	playQueue = "!playqueue"
-	pause = "!pause"
-	next = "!next"
-	previous = "!prev"
-	stop = "!stop"
-	clear = "!clear"
-	shuffle = "!shuffle"
-	list = "!list"
+	Play = "!play"
+	PlayNext = "!playnext"
+	PlayNow = "!playnow"
+	PlayQueue = "!playqueue"
+	Pause = "!pause"
+	Next = "!next"
+	Previous = "!prev"
+	Stop = "!stop"
+	Clear = "!clear"
+	Shuffle = "!shuffle"
+	Repeat = "!repeat"
+	List = "!list"
+	Playlist = "!playlist"
 
-	repeat = "!repeat"
-	repeatAll = "all"
-	repeatStop = "stop"
+class Arguments:
+	All = "all"
+	Stop = "stop"
 
-	playlist = "!playlist"
-	playlistCreate = "create:"
-	playlistFrom = "from:"
-	playlistAdd = "add:"
-	playlistTo = "to:"
-	playlistDelete = "delete:"
-	playlistPlay = "play:"
-	playlistQueue = "queue:"
-	playlistShuffle = "shuffle:"
-	playlistClear = "clear:"
-	playlistList = "list"
+	Create = "create:"
+	Delete = "delete"
+	Add = "add:"
+	Remove = "remove:"
+	Play = "play:"
+	Queue = "queue:"
+	Shuffle = "shuffle:"
+	Clear = "clear:"
+	List = "list"
+
+	From = "from:"
+	To = "to:"
 
 class Command:
 
@@ -211,9 +214,13 @@ def getYoutubeURLFromString(string):
 def createVlcPlayer():
 	global Instance
 	global player
-
-	Instance = vlc.Instance()
-	player = Instance.media_player_new()
+	
+	for i in range(0, 5):
+		try:
+			Instance = vlc.Instance()
+			player = Instance.media_player_new()
+		except:
+			print("couldn't create vlc player in " + str(i+1) + ". try")
 
 def playSong():
 	if index < len(songQueue):
@@ -239,7 +246,7 @@ def playAudioFromUrl(url):
 
 def play(command):
 	if len(command.args) > 0:
-		url = getYoutubeURLFromCommand(command)
+		url = getYoutubeURLFromPlayCommand(command)
 		
 		if not url == None:
 			songQueue.append(url)
@@ -258,7 +265,7 @@ def play(command):
 
 def playNext(command):
 	if len(command.args) > 0:
-		url = getYoutubeURLFromCommand(command)
+		url = getYoutubeURLFromPlayCommand(command)
 		
 		if not url == None:
 			songQueue.insert(index + 1, url)
@@ -268,7 +275,7 @@ def playNext(command):
 
 def playNow(command):
 	if len(command.args) > 0:
-		url = getYoutubeURLFromCommand(command)
+		url = getYoutubeURLFromPlayCommand(command)
 		
 		if not url == None:
 			songQueue.insert(index + 1, url)
@@ -279,24 +286,7 @@ def playNow(command):
 	else:
 		print("not enough arguments")
 
-def playQueue(command):
-	global index
-
-	if len(command.args) > 0:
-		integer = True
-
-		try:
-			tempIndex = int(command.args[0].name)
-		except:
-			integer = False
-			print("enter a valid number as argument")
-
-		if integer:
-			index = getNumberBetween(tempIndex, 0, len(songQueue) - 1)
-			playSong()
-			print("playing queue at index " + str(index))
-
-def getYoutubeURLFromCommand(command):
+def getYoutubeURLFromPlayCommand(command):
 	if isURL(command.args[0].name):
 		url = getURL(command.args[0].name)
 		if isYoutubeURL(url):
@@ -316,6 +306,24 @@ def getYoutubeURLFromCommand(command):
 			print("couldn't find any video")
 	
 	return None
+
+
+def playQueue(command):
+	global index
+
+	if len(command.args) > 0:
+		integer = True
+
+		try:
+			tempIndex = int(command.args[0].name)
+		except:
+			integer = False
+			print("enter a valid number as argument")
+
+		if integer:
+			index = getNumberBetween(tempIndex, 0, len(songQueue) - 1)
+			playSong()
+			print("playing queue at index " + str(index))
 
 def pause():
 	player.pause()
@@ -377,10 +385,10 @@ def repeat(command):
 	global repeatSong
 
 	if len(command.args) > 0:
-		if command.args[0].name == Commands.repeatAll:
+		if command.args[0].name == Arguments.All:
 			repeatSong = 2
 			print("repeating all songs")
-		elif command.args[0].name == Commands.repeatStop:
+		elif command.args[0].name == Arguments.Stop:
 			repeatSong = 0
 			print("stopped repeating")
 		else:
@@ -395,21 +403,23 @@ def repeat(command):
 
 def playlist(command):
 	if len(command.args) > 0:
-		if command.args[0].name == Commands.playlistCreate:
+		if command.args[0].name == Arguments.Create:
 			playlistCreate(command.args)
-		elif command.args[0].name == Commands.playlistDelete:
+		elif command.args[0].name == Arguments.Delete:
 			playlistDelete(command.args)
-		elif command.args[0].name == Commands.playlistAdd:
+		elif command.args[0].name == Arguments.Add:
 			playlistAdd(command.args)
-		elif command.args[0].name == Commands.playlistPlay:
+		elif command.args[0].name == Arguments.Remove:
+			playlistRemove(command.args)
+		elif command.args[0].name == Arguments.Play:
 			playlistPlay(command.args)
-		elif command.args[0].name == Commands.playlistQueue:
+		elif command.args[0].name == Arguments.Queue:
 			playlistQueue(command.args)
-		elif command.args[0].name == Commands.playlistShuffle:
+		elif command.args[0].name == Arguments.Shuffle:
 			playlistShuffle(command.args)
-		elif command.args[0].name == Commands.playlistClear:
+		elif command.args[0].name == Arguments.Clear:
 			playlistClear(command.args)
-		elif command.args[0].name == Commands.playlistList:
+		elif command.args[0].name == Arguments.List:
 			playlistList()
 		else:
 			print("argument " + command.args[0].name + " not found")
@@ -419,7 +429,7 @@ def playlist(command):
 
 def playlistCreate(args):
 	if len(args) > 1:
-		if args[1].name == Commands.playlistFrom:
+		if args[1].name == Arguments.From:
 			if args[1].value == "queue":
 				playlist = Playlist(args[0].value)
 				playlist.songURLs = songQueue.copy()
@@ -451,7 +461,7 @@ def playlistDelete(args):
 
 def playlistAdd(args):
 	if len(args) > 1:
-		if args[1].name == Commands.playlistTo:			
+		if args[1].name == Arguments.To:			
 			for p in playlists:
 				if p.name == args[1].value:					
 					if isURL(args[0].value):
@@ -469,6 +479,53 @@ def playlistAdd(args):
 			print("specified argument not correct")
 	else:
 		print("not enough arguments")
+
+def playlistRemove(args):
+	if len(args) > 1:
+		if args[1].name == Arguments.From:
+			for p in playlists:
+				if p.name == args[1].value:
+					integer = True
+
+					try:
+						tempIndex = int(command.args[0].name)
+					except:
+						integer = False
+						print("enter a valid number as argument")
+
+					if integer:
+						index = getNumberBetween(tempIndex, 0, len(p.songURLs) - 1)
+						del p.songURLs[index]
+						print("removed song at index " + str(index) + " from " + p.name)
+					return
+			print("playlist not found")
+		else:
+			print("specified argument not correct")
+	else:
+		print("not enough arguments")
+
+def getYoutubeURLFromPlaylistCommand(command):
+	if isURL(command.args[0].value):
+		url = getURL(command.args[0].value)
+		if isYoutubeURL(url):
+			return url
+		else:
+			print("specified value is no youtube url")
+	else:
+		string = command.args[0].value + " "
+		newArgs = command.args[1:]
+
+		for arg in newArgs:
+			string += arg.name + " "
+
+		url = getYoutubeURLFromString(string)
+		
+		if not url == None:
+			return url
+		else:
+			print("couldn't find any video")
+	
+	return None
 
 def playlistPlay(args):
 	global songQueue
@@ -567,31 +624,31 @@ def handleCommand(string):
 	command = stringToCommand(string)
 
 	if not command == None:
-		if command.name == Commands.play:
+		if command.name == Commands.Play:
 			play(command)
-		elif command.name == Commands.playNext:
+		elif command.name == Commands.PlayNext:
 			playNext(command)
-		elif command.name == Commands.playNow:
+		elif command.name == Commands.PlayNow:
 			playNow(command)
-		elif command.name == Commands.playQueue:
+		elif command.name == Commands.PlayQueue:
 			playQueue(command)
-		elif command.name == Commands.pause:
+		elif command.name == Commands.Pause:
 			pause()
-		elif command.name == Commands.previous:
+		elif command.name == Commands.Previous:
 			previous()
-		elif command.name == Commands.next:
+		elif command.name == Commands.Next:
 			next()
-		elif command.name == Commands.stop:
+		elif command.name == Commands.Stop:
 			stop()
-		elif command.name == Commands.clear:
+		elif command.name == Commands.Clear:
 			clear()
-		elif command.name == Commands.shuffle:
+		elif command.name == Commands.Shuffle:
 			shuffle()
-		elif command.name == Commands.list:
-			list()
-		elif command.name == Commands.repeat:
+		elif command.name == Commands.Repeat:
 			repeat(command)
-		elif command.name == Commands.playlist:
+		elif command.name == Commands.List:
+			list()
+		elif command.name == Commands.Playlist:
 			playlist(command)
 		else:
 			print("the command: " + command.name + " wasn't found")
