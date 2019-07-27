@@ -51,22 +51,22 @@ An example command could look like this:
 | listing a playlist                                 | !playlist list: \<name> |
 
 ### Examples
-- Play Owl City - Fireflies from YouTube:
+- **Play Owl City - Fireflies from YouTube:**  
   
-  by the automatic search function
-  !play owl city fireflies
+  by the automatic search function  
+  > !play owl city fireflies  
+  
+  by directly providing a YouTube URL  
+  > !play https://www.youtube.com/watch?v=psuRGfAaju4  
 
-  by directly providing a YouTube URL:
-  !play https://www.youtube.com/watch?v=psuRGfAaju4
+- **Create a playlist named myplaylist:**  
 
-- Create a playlist named myplaylist:
+  > !playlist create: myplaylist  
 
-  !playlist create: myplaylist
+- **Add a song to the playlist myplaylist:**  
 
-- Add a song to the playlist myplaylist:
+  > !playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist
 
-  !playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist
+- **Queue the playlist myplaylist:**  
 
-- Queue the playlist myplaylist:
-
-  !playlist queue: myplaylist
+  > !playlist queue: myplaylist  
