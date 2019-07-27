@@ -1,6 +1,6 @@
 # ts3musicbot
 
-##Command Line Interface (CLI)
+## Command Line Interface (CLI)
 
 ### Usage
 To use the bot just write a command in the channel the bot is currently inside.
