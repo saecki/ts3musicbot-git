@@ -348,6 +348,8 @@ def stop():
 	report("stopped")
 
 def clear():
+	global index
+
 	stop()
 	songQueue.clear()
 	index = 0
