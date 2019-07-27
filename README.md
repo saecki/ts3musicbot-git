@@ -7,7 +7,8 @@ To use the bot just write a command in the channel the bot is currently inside.
 
 ### Syntax
 Commands are built upon a structure.
-A command can take certain arguments with or without values attached to them. If an argument requires a value it ends with a colon.
+A command starts with a keyword and can be followed up by certain Arguments seperated with spaces which further specify the behavior of the command.
+Arguments on their own can require values, if so they will end with a colon and the values need to be specified behind seperated by spaces aswell.
 An example command could look like this:
 
 !command arg1: value1 arg2 arg3: value3
@@ -48,3 +49,24 @@ An example command could look like this:
 | clearing a playlist                                | !playlist clear: \<name> |
 | listing all playlists                              | !playlist list: all |
 | listing a playlist                                 | !playlist list: \<name> |
+
+### Examples
+- Play Owl City - Fireflies from YouTube:
+  
+  by the automatic search function
+  !play owl city fireflies
+
+  by directly providing a YouTube URL:
+  !play https://www.youtube.com/watch?v=psuRGfAaju4
+
+- Create a playlist named myplaylist:
+
+  !playlist create: myplaylist
+
+- Add a song to the playlist myplaylist:
+
+  !playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist
+
+- Queue the playlist myplaylist:
+
+  !playlist queue: myplaylist
