@@ -12,6 +12,7 @@ from common.classproperties import TS3MusicBotModule
 from common.classproperties import Command
 from common.classproperties import Argument
 from common.classproperties import Playlist
+from common.constants import Prefixes
 from common.constants import Commands
 from common.constants import Args
 from common.constants import ArgValues
@@ -21,17 +22,17 @@ class CLI(TS3MusicBotModule):
 	def __init__(self):
 		super().__init__()
 		self.lastLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
+		bot.addTaskToAsyncIOLoop(self.checkForTerminalCommand())
 		self.report("waiting for a command")
 
 	def update(self):
-		#self.checkForTeamspeakCommand()
-		self.checkForTerminalCommand()
+		self.checkForTeamspeakCommand()
 	
 	def report(self, string):
 		print(string)
 		self.sendToChannel(string)
 
-	async def checkForTeamspeakCommand(self):
+	def checkForTeamspeakCommand(self):
 		try:
 			currentLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
 			if  currentLine > self.lastLine:
@@ -40,56 +41,63 @@ class CLI(TS3MusicBotModule):
 						pass
 					string = CLI.stripTS3Chat(line)
 					command = CLI.stringToCommand(string)
-					self.handleCommand(command)
+					self.handleCommand(command, Prefixes.Teamspeak)
 					self.lastLine = currentLine
 		except:
 			self.report("couldn't retrieve new command")
 
-	def checkForTerminalCommand(self):
-		string = input()
-		command = CLI.stringToCommand(string)
-		self.handleCommand(command)
+	async def checkForTerminalCommand(self):
+		while True:
+			string = input()
+			command = CLI.stringToCommand(string)
+			self.handleCommand(command)
+
+			await asyncio.sleep(0.5)
 
 	#
 	#commands
 	#
 
-	def handleCommand(self, command):
+	def handleCommand(self, command, prefix=""):
 		if not command == None:
-			if command.name == Commands.Play:
-				self.play(command)
-			elif command.name == Commands.PlayNext:
-				self.playNext(command)
-			elif command.name == Commands.PlayNow:
-				self.playNow(command)
-			elif command.name == Commands.PlayQueue:
-				self.playQueue(command)
-			elif command.name == Commands.Remove:
-				self.remove(command)
-			elif command.name == Commands.RemoveNext:
-				self.removeNext()
-			elif command.name == Commands.RemoveCurrent:
-				self.removeCurrent()
-			elif command.name == Commands.Pause:
-				self.pause()
-			elif command.name == Commands.Previous:
-				self.previous()
-			elif command.name == Commands.Next:
-				self.next()
-			elif command.name == Commands.Stop:
-				self.stop()
-			elif command.name == Commands.Clear:
-				self.clear()
-			elif command.name == Commands.Shuffle:
-				self.shuffle()
-			elif command.name == Commands.Repeat:
-				self.repeat(command)
-			elif command.name == Commands.List:
-				self.list()
-			elif command.name == Commands.Playlist:
-				self.playlist(command)
+			if command.name.startswith(prefix):
+				command.name = command.name[len(prefix):]
+				if command.name == Commands.Play:
+					self.play(command)
+				elif command.name == Commands.PlayNext:
+					self.playNext(command)
+				elif command.name == Commands.PlayNow:
+					self.playNow(command)
+				elif command.name == Commands.PlayQueue:
+					self.playQueue(command)
+				elif command.name == Commands.Remove:
+					self.remove(command)
+				elif command.name == Commands.RemoveNext:
+					self.removeNext()
+				elif command.name == Commands.RemoveCurrent:
+					self.removeCurrent()
+				elif command.name == Commands.Pause:
+					self.pause()
+				elif command.name == Commands.Previous:
+					self.previous()
+				elif command.name == Commands.Next:
+					self.next()
+				elif command.name == Commands.Stop:
+					self.stop()
+				elif command.name == Commands.Clear:
+					self.clear()
+				elif command.name == Commands.Shuffle:
+					self.shuffle()
+				elif command.name == Commands.Repeat:
+					self.repeat(command)
+				elif command.name == Commands.List:
+					self.list()
+				elif command.name == Commands.Playlist:
+					self.playlist(command)
+				else:
+					self.report("the command: " + command.name + " wasn't found")
 			else:
-				self.report("the command: " + command.name + " wasn't found")
+				self.report("prefix not found")
 		else:
 			self.report("wow that's impressive")
 

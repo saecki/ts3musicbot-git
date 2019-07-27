@@ -32,15 +32,15 @@ def run():
 
 	readData()
 
+	loop = asyncio.get_event_loop()
+	addTaskToAsyncIOLoop(mainLoop())
+	addTaskToAsyncIOLoop(frequentlyWriteData())
+
 	modules.append(CLI())
 
-	loop = asyncio.get_event_loop()
-	loop.create_task(mainLoop())
-	loop.create_task(frequentlyWriteData())
-
 	try:
-		loop.run_forever()	
-	except KeyboardInterrupt:
+		loop.run_forever()
+	except:
 		pass
 	finally:
 		quit()
@@ -52,6 +52,9 @@ def quit():
 	loop.close()
 	writeData()
 	exit()
+
+def addTaskToAsyncIOLoop(function):
+	loop.create_task(function)
 
 async def mainLoop():
 	global lastLine

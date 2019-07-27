@@ -7,17 +7,17 @@ To use the bot just write a command in the channel the bot is currently inside.
 
 ### Syntax
 Commands are built upon a structure.
-A command starts with a keyword and can be followed up by certain Arguments seperated with spaces which further specify the behavior of the command.  
+A command starts with a keyword and can be followed up by certain arguments seperated with spaces which further specify the behavior of the command.  
 Arguments on their own can require values, if so they will end with a colon and the values need to be specified behind seperated by spaces aswell.  
 
 An example command could look like this:  
 ```!command arg1: value1 arg2 arg3: value3```
 
 ### Commands
-\* songs can be youtube urls or just text which will be used to search a song on youtube	
+\* songs can be youtube urls or just text which will be used to search a song on youtube   
 
 | Function                                           | Command |
-| ---                                                | --- | 
+| ---                                                | --- |
 | adding a song to the queue                         | !play ```song*``` |
 | playing a song right after the current song        | !playnext ```song*``` |
 | playing a song right now                           | !playnow ```song*``` |
