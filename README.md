@@ -37,7 +37,7 @@ An example command could look like this:
 | shuffling the queue                                | !shuffle |
 | listing the queue                                  | !list |
 |                                                    |
-| creating a playlist                                | !playlist create: <div style="color: #89ff67">name</div> |
+| creating a playlist                                | !playlist create: ```<name>``` |
 | creating a playlist from the queue                 | !playlist create: \<name> from: queue |
 | creating a playlist from another playlist          | !playlist create: \<name> from: \<otherplaylist> |
 | deleteting a playlist                              | !playlist delete: \<name> |
@@ -54,19 +54,19 @@ An example command could look like this:
 - **Play Owl City - Fireflies from YouTube:**  
   
   by the automatic search function  
-  > !play owl city fireflies  
+  ```!play owl city fireflies```  
   
   by directly providing a YouTube URL  
-  > !play https://www.youtube.com/watch?v=psuRGfAaju4  
+  ```!play https://www.youtube.com/watch?v=psuRGfAaju4```  
 
 - **Create a playlist named myplaylist:**  
 
-  > playlist create: myplaylist  
+  ```playlist create: myplaylist```  
 
 - **Add a song to the playlist myplaylist:**  
 
-  > !playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist  
+  ```!playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist```  
 
 - **Queue the playlist myplaylist:**  
 
-  > !playlist queue: myplaylist  
+  ```!playlist queue: myplaylist```  
