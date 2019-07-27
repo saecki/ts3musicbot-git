@@ -1,56 +1,67 @@
 # ts3musicbot
+A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube to a Teamspeak Channel
 
 ## Command Line Interface (CLI)
 
 ### Usage
-To use the bot just write a command in the channel the bot is currently inside.
+To interface the bot on teamspeak directly just write a command in the channel the bot is currently inside.  
+Opionally the bot can be directly 
 
 ### Syntax
 Commands are built upon a structure.
 A command starts with a keyword and can be followed up by certain arguments seperated with spaces which further specify the behavior of the command.  
 Arguments on their own can require values, if so they will end with a colon and the values need to be specified behind seperated by spaces aswell.  
+Depending on the platform commands can have prefixes to which the command keywords are simply appended.  
 
-An example command could look like this:  
+An example command written on teamspeak could look like this:  
 ```!command arg1: value1 arg2 arg3: value3```
+
+### Prefixes
+| Plattform                                          | Prefix |
+| ---                                                | --- |
+| Teamspeak                                          | ! |
+| Terminal                                           | ```None``` |
 
 ### Commands
 \* songs can be youtube urls or just text which will be used to search a song on youtube   
 
 | Function                                           | Command |
 | ---                                                | --- |
-| adding a song to the queue                         | !play ```song*``` |
-| playing a song right after the current song        | !playnext ```song*``` |
-| playing a song right now                           | !playnow ```song*``` |
-| playing a song at a certain index in the queue     | !playqueue ```index``` |
-| resuming the song                                  | !play |
-| removing the song at a certain index               | !remove ```index``` |
-| removing the next song                             | !removenext |
-| removing the current song                          | !removecurrent |
-| pausing the song                                   | !pause |
-| playing the next song                              | !next |
-| playing the previous song                          | !prev |
-| stopping the song                                  | !stop |
-| clearing the queue                                 | !clear |
-| repeating one song                                 | !repeate |
-| repeating all songs                                | !repeate all |
-| stop repeating                                     | !repeate stop |
-| shuffling the queue                                | !shuffle |
-| listing the queue                                  | !list |
+| adding a song to the queue                         | ```Prefix```play ```song*``` |
+| playing a song right after the current song        | ```Prefix```playnext ```song*``` |
+| playing a song right now                           | ```Prefix```playnow ```song*``` |
+| playing a song at a certain index in the queue     | ```Prefix```playqueue ```index``` |
+| resuming the song                                  | ```Prefix```play |
+| removing the song at a certain index               | ```Prefix```remove ```index``` |
+| removing the next song                             | ```Prefix```removenext |
+| removing the current song                          | ```Prefix```removecurrent |
+| pausing the song                                   | ```Prefix```pause |
+| playing the next song                              | ```Prefix```next |
+| playing the previous song                          | ```Prefix```prev |
+| stopping the song                                  | ```Prefix```stop |
+| clearing the queue                                 | ```Prefix```clear |
+| repeating one song                                 | ```Prefix```repeate |
+| repeating all songs                                | ```Prefix```repeate all |
+| stop repeating                                     | ```Prefix```repeate stop |
+| shuffling the queue                                | ```Prefix```shuffle |
+| listing the queue                                  | ```Prefix```list |
 |                                                    |
-| creating a playlist                                | !playlist create: ```name``` |
-| creating a playlist from the queue                 | !playlist create: ```name``` from: queue |
-| creating a playlist from another playlist          | !playlist create: ```name``` from: ```otherplaylist``` |
-| deleteting a playlist                              | !playlist delete: ```name``` |
-| adding a song to a playlist                        | !playlist add: ```url``` to: ```name``` |
-| removing a song at a certain index from a playlist | !playlist remove: ```index``` from: ```name``` |
-| adding the playlist to the queue                   | !playlist queue: ```name``` |
-| replacing the queue with a playlist                | !playlist queue: ```name``` replace |
-| shuffling a playlist                               | !playlist shuffle: ```name``` |
-| clearing a playlist                                | !playlist clear: ```name``` |
-| listing all playlists                              | !playlist list: all |
-| listing a playlist                                 | !playlist list: ```name``` |
+| creating a playlist                                | ```Prefix```playlist create: ```name``` |
+| creating a playlist from the queue                 | ```Prefix```playlist create: ```name``` from: queue |
+| creating a playlist from another playlist          | ```Prefix```playlist create: ```name``` from: ```otherplaylist``` |
+| deleteting a playlist                              | ```Prefix```playlist delete: ```name``` |
+| adding a song to a playlist                        | ```Prefix```playlist add: ```url``` to: ```name``` |
+| removing a song at a certain index from a playlist | ```Prefix```playlist remove: ```index``` from: ```name``` |
+| adding the playlist to the queue                   | ```Prefix```playlist queue: ```name``` |
+| replacing the queue with a playlist                | ```Prefix```playlist queue: ```name``` replace |
+| shuffling a playlist                               | ```Prefix```playlist shuffle: ```name``` |
+| clearing a playlist                                | ```Prefix```playlist clear: ```name``` |
+| listing all playlists                              | ```Prefix```playlist list: all |
+| listing a playlist                                 | ```Prefix```playlist list: ```name``` |
 
 ### Examples
+
+#### Teamspeak
 - **Play Owl City - Fireflies from YouTube:**  
   
   by the automatic search function  
@@ -61,7 +72,7 @@ An example command could look like this:
 
 - **Create a playlist named myplaylist:**  
 
-  ```playlist create: myplaylist```  
+  ```!playlist create: myplaylist```  
 
 - **Add a song to the playlist myplaylist:**  
 
@@ -70,3 +81,25 @@ An example command could look like this:
 - **Queue the playlist myplaylist:**  
 
   ```!playlist queue: myplaylist```  
+
+#### Terminal
+
+- **Play Owl City - Fireflies from YouTube:**  
+  
+  by the automatic search function  
+  ```play owl city fireflies```  
+  
+  by directly providing a YouTube URL  
+  ```play https://www.youtube.com/watch?v=psuRGfAaju4```  
+
+- **Create a playlist named myplaylist:**  
+
+  ```playlist create: myplaylist```  
+
+- **Add a song to the playlist myplaylist:**  
+
+  ```playlist add: https://www.youtube.com/watch?v=psuRGfAaju4 to: myplaylist```  
+
+- **Queue the playlist myplaylist:**  
+
+  ```playlist queue: myplaylist```  
