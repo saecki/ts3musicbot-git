@@ -40,5 +40,10 @@ class Args:
 	To = "to:"
 class ArgValues:
 	Queue = "queue"
-	All = "all"
-	Stop = "stop"
+
+class ForbiddenNames:
+	fields = [
+		ArgValues.Queue,
+		ArgValues.All,
+		ArgValues.Stop
+		]

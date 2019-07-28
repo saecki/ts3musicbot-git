@@ -10,7 +10,7 @@ class TS3MusicBotModule:
 		pass
 
 	@abstractmethod
-	def report(self, string):
+	async def report(self, string):
 		pass
 
 class Command:

@@ -9,6 +9,7 @@ import random
 from common.classproperties import TS3MusicBotModule
 from common.classproperties import Playlist
 from common.constants import JSONFields
+from common.constants import ForbiddenNames
 
 from modules.cli import CLI
 
@@ -61,7 +62,7 @@ async def mainLoop():
 	global index
 
 	while True:
-		
+
 		for m in modules:
 			m.update()
 
@@ -141,6 +142,8 @@ def writeData():
 
 def readData():
 	global playlists
+	global index
+	global repeatSong
 
 	try:
 		with open(getConfigFilePath()) as jsonfile:  
@@ -239,8 +242,10 @@ def play(songURL=None):
 		if player.get_state() == vlc.State.Paused:
 			player.play()
 			report("resumed")
-		else:
+		elif not player.get_state() == vlc.State.Playing:
 			playSong()
+		else:
+			report("already playing")
 	else:
 		songQueue.append(songURL)
 		report("added " + songURL + " to the queue")
@@ -382,24 +387,38 @@ def getPlaylist(name):
 	return None
 
 def playlistCreate(name):
-	p = Playlist(name)
-	playlists.append(p)
-	report("created " + name)
-	writeData()
+	if not isForbidden(name):
+		p = Playlist(name)
+		playlists.append(p)
+		report("created " + name)
+		writeData()
 
 def playlistCreateFromQueue(name):
-	p = Playlist(name)
-	p.songURLs = songQueue.copy()
-	playlists.append(p)
-	report("created " + name + " from the queue")
-	writeData()
+	if not isForbidden(name):
+		p = Playlist(name)
+		p.songURLs = songQueue.copy()
+		playlists.append(p)
+		report("created " + name + " from the queue")
+		writeData()
 
 def playlistCreateFrom(name, playlist):
-	p = Playlist(name)
-	p.songURLs = playlist.copy()
-	playlists.append(p)
-	report("created " + name + " from " + playlist.name)
-	writeData()
+	if not isForbidden(name):
+		p = Playlist(name)
+		p.songURLs = playlist.copy()
+		playlists.append(p)
+		report("created " + name + " from " + playlist.name)
+		writeData()
+
+def isForbidden(name):
+	for n in ForbiddenNames.fields:
+		if name == n:
+			report("name is forbidden")
+			return True
+	for p in playlists:
+		if name == p.name:
+			report("name is already exists")
+			return True
+	return False
 
 def playlistDelete(playlist):
 	playlists.remove(playlist)

@@ -1,5 +1,5 @@
 import os
-import asyncio
+import multiprocessing
 import time
 import json
 import re
@@ -22,11 +22,11 @@ class CLI(TS3MusicBotModule):
 	def __init__(self):
 		super().__init__()
 		self.lastLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
-		bot.addTaskToAsyncIOLoop(self.checkForTerminalCommand())
 		self.report("waiting for a command")
 
 	def update(self):
-		self.checkForTeamspeakCommand()
+		#self.checkForTeamspeakCommand()
+		self.checkForTerminalCommand()
 	
 	def report(self, string):
 		print(string)
@@ -46,13 +46,10 @@ class CLI(TS3MusicBotModule):
 		except:
 			self.report("couldn't retrieve new command")
 
-	async def checkForTerminalCommand(self):
-		while True:
-			string = input()
-			command = CLI.stringToCommand(string)
-			self.handleCommand(command)
-
-			await asyncio.sleep(0.5)
+	def checkForTerminalCommand(self):
+		string = input()
+		command = CLI.stringToCommand(string)
+		self.handleCommand(command)
 
 	#
 	#commands
