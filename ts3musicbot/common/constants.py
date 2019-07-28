@@ -39,6 +39,8 @@ class Args:
 	From = "from:"
 	To = "to:"
 class ArgValues:
+	All = "all"
+	Stop = "stop"
 	Queue = "queue"
 
 class ForbiddenNames:

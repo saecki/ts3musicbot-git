@@ -25,8 +25,8 @@ class CLI(TS3MusicBotModule):
 		self.report("waiting for a command")
 
 	def update(self):
-		#self.checkForTeamspeakCommand()
-		self.checkForTerminalCommand()
+		self.checkForTeamspeakCommand()
+		#self.checkForTerminalCommand()
 	
 	def report(self, string):
 		print(string)
