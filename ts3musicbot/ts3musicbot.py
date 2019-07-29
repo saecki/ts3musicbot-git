@@ -8,6 +8,7 @@ import random
 
 from common.classproperties import TS3MusicBotModule
 from common.classproperties import Playlist
+from common.constants import Modules
 from common.constants import JSONFields
 from common.constants import ForbiddenNames
 
@@ -25,7 +26,7 @@ repeatSong = 0
 
 loop = None
 
-def run():
+def run(args=Modules.CLI):
 	global loop
 
 	if not createVlcPlayer():
@@ -37,7 +38,8 @@ def run():
 	addTaskToAsyncIOLoop(mainLoop())
 	addTaskToAsyncIOLoop(frequentlyWriteData())
 
-	modules.append(CLI())
+	if Modules.CLI in args:
+		modules.append(CLI())
 
 	try:
 		loop.run_forever()
@@ -47,6 +49,13 @@ def run():
 		quit()
 
 	report("Exiting")
+
+def end():
+	if not loop == None:
+		loop.run_until_complete(loop.shutdown_asyncgens())
+		loop.close()
+		report("stopped TS3MusicBot")
+		writeData()
 
 def quit():
 	loop.run_until_complete(loop.shutdown_asyncgens())
@@ -233,6 +242,17 @@ def isPlayingOrPaused():
 		return True
 	return False
 
+def setVolume(volume):
+	for i in range(0, 5):
+		if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
+			report("set volume to " + str(player.audio_get_volume()))
+			break
+
+def plusVolume(volume):
+	setVolume(player.audio_get_volume() + volume)
+
+def minusVolume(volume):
+	setVolume(player.audio_get_volume() - volume)
 #
 #queue
 #

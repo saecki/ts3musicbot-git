@@ -1,3 +1,7 @@
+class Modules:
+	CLI = "c"
+	WebInterface = "w"
+
 class JSONFields:
 	Playlists = "playlists"
 	SongQueue = "songQueue"
@@ -23,6 +27,7 @@ class Commands:
 	Shuffle = "shuffle"
 	Repeat = "repeat"
 	List = "list"
+	Volume = "volume"
 	Playlist = "playlist"
 
 class Args:
@@ -38,6 +43,7 @@ class Args:
 
 	From = "from:"
 	To = "to:"
+
 class ArgValues:
 	All = "all"
 	Stop = "stop"

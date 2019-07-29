@@ -33,18 +33,18 @@ class CLI(TS3MusicBotModule):
 		self.sendToChannel(string)
 
 	def checkForTeamspeakCommand(self):
-		try:
-			currentLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
-			if  currentLine > self.lastLine:
-				with open(CLI.getTS3ChannelChatFilePath()) as f:
-					for line in f:
-						pass
-					string = CLI.stripTS3Chat(line)
-					command = CLI.stringToCommand(string)
-					self.handleCommand(command, Prefixes.Teamspeak)
-					self.lastLine = currentLine
-		except:
-			self.report("couldn't retrieve new command")
+		#try:
+		currentLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
+		if  currentLine > self.lastLine:
+			with open(CLI.getTS3ChannelChatFilePath()) as f:
+				for line in f:
+					pass
+				string = CLI.stripTS3Chat(line)
+				command = CLI.stringToCommand(string)
+				self.handleCommand(command, Prefixes.Teamspeak)
+				self.lastLine = currentLine
+		#except:
+		#	self.report("couldn't retrieve new command")
 
 	def checkForTerminalCommand(self):
 		string = input()
@@ -89,6 +89,8 @@ class CLI(TS3MusicBotModule):
 					self.repeat(command)
 				elif command.name == Commands.List:
 					self.list()
+				elif command.name == Commands.Volume:
+					self.volume(command)
 				elif command.name == Commands.Playlist:
 					self.playlist(command)
 				else:
@@ -352,6 +354,35 @@ class CLI(TS3MusicBotModule):
 				self.report("argument " + command.args[0].name + " not found")
 		else:
 			bot.repeat(1)
+
+	def volume(self, command):
+		if len(command.args) > 0:
+			if command.args[0].name.startswith("+"):
+				string = command.args[0].name[1:]
+				volume = self.getNumberFromString(string)
+				
+				if not volume == None:
+					bot.plusVolume(volume)
+
+			elif command.args[0].name.startswith("-"):
+				string = command.args[0].name[1:]
+				volume = self.getNumberFromString(string)
+				
+				if not volume == None:
+					bot.minusVolume(volume)
+
+			else:
+				volume = self.getNumberFromString(command.args[0].name)
+				if not volume == None:
+					bot.setVolume(volume)
+
+	def getNumberFromString(self, string):
+		try:
+			num = int(string)
+		except:
+			self.report("not a number")
+			return None
+		return num
 
 	#
 	#playlist
