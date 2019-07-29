@@ -1,10 +1,10 @@
 # ts3musicbot
-A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube
+A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
 
 ## Command Line Interface (CLI)
 
 ### Usage
-To interface the bot on teamspeak directly just write a command in the channel the bot is currently inside.  
+To interface the bot on teamspeak just write a command in the channel the bot is currently inside.  
 
 ### Syntax
 Commands are built upon a structure.
