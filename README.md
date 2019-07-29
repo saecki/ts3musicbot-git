@@ -1,5 +1,5 @@
 # ts3musicbot
-A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube to a Teamspeak Channel
+A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube
 
 ## Command Line Interface (CLI)
 
