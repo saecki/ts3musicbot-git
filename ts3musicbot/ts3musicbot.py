@@ -246,7 +246,7 @@ def setVolume(volume):
 	try:
 		for i in range(0, 5):
 			if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
-				time.sleep(200)
+				time.sleep(0.5)
 				report("set volume to " + str(player.audio_get_volume()))
 				return
 	except:
