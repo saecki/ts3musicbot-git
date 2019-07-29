@@ -46,8 +46,8 @@ An example command written on teamspeak could look like this:
 | shuffling the queue                                | ```Prefix```shuffle |
 | listing the queue                                  | ```Prefix```list |
 | setting the volume to a value between 0 to 120     | ```Prefix```volume ```value```|
-| adding a value to the volume                       | ```Prefix```volume +```value```|
-| subtracting a value from the volume                | ```Prefix```volume +```value```|
+| adding a value to the volume                       | ```Prefix```volume ```+value```|
+| subtracting a value from the volume                | ```Prefix```volume ```-value```|
 |                                                    |
 | creating a playlist                                | ```Prefix```playlist create: ```name``` |
 | creating a playlist from the queue                 | ```Prefix```playlist create: ```name``` from: queue |
