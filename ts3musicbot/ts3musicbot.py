@@ -429,7 +429,7 @@ def playlistCreateFromQueue(name):
 def playlistCreateFrom(name, playlist):
 	if not isForbidden(name):
 		p = Playlist(name)
-		p.songURLs = playlist.copy()
+		p.songURLs = playlist.songURLs.copy()
 		playlists.append(p)
 		report("created " + name + " from " + playlist.name)
 		writeData()
