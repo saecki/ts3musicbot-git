@@ -5,7 +5,6 @@ A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube to
 
 ### Usage
 To interface the bot on teamspeak directly just write a command in the channel the bot is currently inside.  
-Opionally the bot can be directly 
 
 ### Syntax
 Commands are built upon a structure.
