@@ -422,7 +422,7 @@ class CLI(TS3MusicBotModule):
 				else:
 					p = bot.getPlaylist(args[1].value)
 					if not p == None:
-						bot.createPlaylistFrom(name, p)
+						bot.playlistCreateFrom(name, p)
 					else:
 						self.report("couldn't find playlist")
 			else:

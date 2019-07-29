@@ -243,10 +243,15 @@ def isPlayingOrPaused():
 	return False
 
 def setVolume(volume):
-	for i in range(0, 5):
-		if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
-			report("set volume to " + str(player.audio_get_volume()))
-			break
+	try:
+		for i in range(0, 5):
+			if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
+				time.sleep(200)
+				report("set volume to " + str(player.audio_get_volume()))
+				return
+	except:
+		pass
+	report("couldn't update volume")
 
 def plusVolume(volume):
 	setVolume(player.audio_get_volume() + volume)
