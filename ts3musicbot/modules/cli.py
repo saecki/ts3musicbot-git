@@ -212,7 +212,7 @@ class CLI(TS3MusicBotModule):
 		return url
 
 	def isYoutubeURL(self, url):
-		if "youtu.be" in url or "youtube.com" in url:
+		if "https://youtu.be/" in url or "https://www.youtube.com/watch?v=" in url:
 			return True
 		else:
 			self.report("no valid youtube link")
