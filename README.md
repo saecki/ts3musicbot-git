@@ -39,9 +39,9 @@ An example command written on teamspeak could look like this:
 | playing the previous song                          | ```Prefix```prev |
 | stopping the song                                  | ```Prefix```stop |
 | clearing the queue                                 | ```Prefix```clear |
-| repeating one song                                 | ```Prefix```repeate |
-| repeating all songs                                | ```Prefix```repeate all |
-| stop repeating                                     | ```Prefix```repeate stop |
+| repeating one song                                 | ```Prefix```repeat |
+| repeating all songs                                | ```Prefix```repeat all |
+| stop repeating                                     | ```Prefix```repeat stop |
 | shuffling the queue                                | ```Prefix```shuffle |
 | listing the queue                                  | ```Prefix```list |
 | setting the volume to a value between 0 to 120     | ```Prefix```volume ```value```|
