@@ -1,13 +1,17 @@
 import pafy
 import vlc 
 import os
-import asyncio
+import telnetlib
 import time
+import threading
 import json
 import random
 
+from common.classproperties import FileSystem
 from common.classproperties import TS3MusicBotModule
 from common.classproperties import Playlist
+from common.classproperties import Song
+
 from common.constants import Modules
 from common.constants import JSONFields
 from common.constants import ForbiddenNames
@@ -24,53 +28,70 @@ songQueue = []
 index = 0
 repeatSong = 0
 
-loop = None
+threads = []
+lock = None
+clientQueryLock = None
+
+running = True
 
 def run(args=Modules.CLI):
 	global loop
+	global lock
+	global clientQueryLock
 
 	if not createVlcPlayer():
 		exit()
 
 	readData()
 
-	loop = asyncio.get_event_loop()
-	addTaskToAsyncIOLoop(mainLoop())
-	addTaskToAsyncIOLoop(frequentlyWriteData())
+	lock = threading.Lock()
+	clientQueryLock = threading.Lock()
+
+	mainThread = addThread(target=mainLoop)
+	addThread(target=frequentlyWriteData, daemon=True)
 
 	if Modules.CLI in args:
 		modules.append(CLI())
 
-	try:
-		loop.run_forever()
-	except:
-		pass
-	finally:
-		quit()
+	startThreads()
 
-	report("Exiting")
-
-def end():
-	if not loop == None:
-		loop.run_until_complete(loop.shutdown_asyncgens())
-		loop.close()
-		report("stopped TS3MusicBot")
-		writeData()
+	mainThread.join()
 
 def quit():
-	loop.run_until_complete(loop.shutdown_asyncgens())
-	loop.close()
+	global running
+
+	report("exiting")
 	writeData()
+	running = False
 	exit()
 
-def addTaskToAsyncIOLoop(function):
-	loop.create_task(function)
+def startNewThread(target=None, args=None, daemon=False):
+	t = addThread(target=target, args=args, daemon=daemon)
+	if not t == None:
+		t.start()
 
-async def mainLoop():
+def addThread(target=None, args=None, daemon=False):
+	if not target == None:
+		t = None
+		if args == None:
+			t = threading.Thread(target=target)
+		else:
+			t = threading.Thread(target=target, args=args)
+		t.setDaemon(daemon)
+		threads.append(t)
+
+		return t
+	return None
+
+def startThreads():
+	for t in threads:
+		t.start()
+
+def mainLoop():
 	global lastLine
 	global index
 
-	while True:
+	while running:
 
 		for m in modules:
 			m.update()
@@ -86,13 +107,13 @@ async def mainLoop():
 					playSong()
 				else:
 					next()
+		time.sleep(0.5)
 
-		await asyncio.sleep(0.5)
-
-async def frequentlyWriteData():
-	while True:
-		writeData()
-		await asyncio.sleep(600)
+def frequentlyWriteData():
+	while running:
+		with lock:
+			writeData()
+		time.sleep(600)
 
 def report(string):
 	for m in modules:
@@ -104,7 +125,7 @@ def report(string):
 
 def getNumberBetween(number, min, max):
 	if number < min:
-		return minp
+		return min
 	elif number > max:
 		return max
 	else:
@@ -113,21 +134,6 @@ def getNumberBetween(number, min, max):
 #
 #file system
 #
-
-def getConfigFolderPath():
-	path = os.getenv("APPDATA")
-	path += os.path.sep
-	path += "TS3MusicBot"
-
-	return path
-
-def getConfigFilePath():
-	path = getConfigFolderPath()
-	if len(path) > 0:
-		path += os.path.sep
-	path += "config.json"
-
-	return path
 
 def writeData():
 
@@ -141,10 +147,10 @@ def writeData():
 		data[JSONFields.Playlists].append(p.toJSON())
 
 	for s in songQueue:
-		data[JSONFields.SongQueue].append(s)
+		data[JSONFields.SongQueue].append(s.toJSON())
 
 	try:
-		with open(getConfigFilePath(), "w") as jsonfile:
+		with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
 			json.dump(data, jsonfile)
 	except:
 		report("couldn't write data")
@@ -155,7 +161,7 @@ def readData():
 	global repeatSong
 
 	try:
-		with open(getConfigFilePath()) as jsonfile:  
+		with open(FileSystem.getConfigFilePath()) as jsonfile:
 			data = json.load(jsonfile)
 			try:
 				for p in data[JSONFields.Playlists]:
@@ -165,14 +171,14 @@ def readData():
 
 			try:
 				for s in data[JSONFields.SongQueue]:
-					songQueue.append(s)
+					songQueue.append(Song.jsonToSong(s))
 			except:
 				report("couldn't read songQueue")
 			
 			try:
 				index = data[JSONFields.Index]
 			except:
-				report("couldn't read index")			
+				report("couldn't read index")
 			
 			try:
 				repeatSong = data[JSONFields.RepeatSong]
@@ -184,7 +190,7 @@ def readData():
 		report("couldn't read config file")
 		report("trying to create the conifg folder")
 		try:
-			os.mkdir(getConfigFolderPath())
+			os.mkdir(FileSystem.getConfigFolderPath())
 		except FileExistsError:	
 			report("config folder existed")
 	return False
@@ -219,34 +225,62 @@ def createVlcPlayer():
 
 def playSong():
 	if index < len(songQueue):
-		playAudioFromUrl(songQueue[index])
+		song = songQueue[index]
+		startNewThread(target=playAudioFromSong, args=(song,), daemon=True)
 	else:
 		report("there is nothing to play")
 
-def playAudioFromUrl(url):
-
+def playAudioFromSong(song):
 	try:
-		playurl = getBestYoutubeAudioURL(url)
+		playurl = getBestYoutubeAudioURL(song.url)
 		
 		Media = Instance.media_new(playurl)
 		Media.get_mrl()
 		player.set_media(Media)
 		player.play()
-		report("playing " + url)
+		report("playing " + song.title + " [url=" + song.url + "]URL[/url]")
 	except:
 		createVlcPlayer()
-		report("couldn't play song with url " + url)
+		report("couldn't play song " + song.title + " [url=" + song.url + "]URL[/url]")
 
 def isPlayingOrPaused():
 	if player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused:
 		return True
 	return False
 
+def setPosition(position):
+	position = getNumberBetween(position, 0, 100)
+	position = position / 100
+
+	try:
+		for i in range(0, 5):
+			if player.set_position(position) == None: #Should be checking for 0 but this library is shit and returns None
+				time.sleep(0.1)
+				report("set position to " + str(round(player.get_position() * 100)))
+				return
+	except:
+		pass
+	report("couldn't update position")
+
+def setSpeed(speed):
+	rate = getNumberBetween(speed, 25, 400)
+	rate = rate / 100
+
+	try:
+		for i in range(0, 5):
+			if player.set_rate(rate) == 0:
+				time.sleep(0.1)
+				report("set speed to " + str(round(player.get_rate() * 100)))
+				return
+	except:
+		pass
+	report("couldn't update speed")
+
 def setVolume(volume):
 	try:
 		for i in range(0, 5):
 			if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
-				time.sleep(0.5)
+				time.sleep(0.1)
 				report("set volume to " + str(player.audio_get_volume()))
 				return
 	except:
@@ -262,8 +296,8 @@ def minusVolume(volume):
 #queue
 #
 
-def play(songURL=None):
-	if songURL == None:
+def play(song=None):
+	if song == None:
 		if player.get_state() == vlc.State.Paused:
 			player.play()
 			report("resumed")
@@ -272,24 +306,30 @@ def play(songURL=None):
 		else:
 			report("already playing")
 	else:
-		songQueue.append(songURL)
-		report("added " + songURL + " to the queue")
+		songQueue.append(song)
+		report("added " + song.title + " [url=" + song.url + "]URL[/url] to the queue")
 		
 		if len(songQueue) == 1:
 			playSong()
 		elif not (isPlayingOrPaused()):
 			next()
 
-def playNext(songURL):
-	songQueue.insert(index + 1, url)
-	report("added " + url + "as next song to the queue")
+def playNext(song):
+	songQueue.insert(index + 1, song)
+	report("added " + song.title + " [url=" + song.url + "]URL[/url] as next song to the queue")
 
-def playNow(songURL):
-	songQueue.insert(index + 1, songURL)
+def playNow(song):
+	songQueue.insert(index + 1, song)
 	if len(songQueue) == 1:
 		playSong()
 	else:
 		next()
+
+def playQueue(i):
+	global index
+
+	index = getNumberBetween(i, 0, len(songQueue) - 1)
+	playSong()
 
 def remove(i):
 	global index
@@ -328,13 +368,6 @@ def removeCurrent():
 			playSong()
 	else:
 		report("no songs to remove")
-
-def playQueue(i):
-	global index
-
-	index = getNumberBetween(i, 0, len(songQueue) - 1)
-	playSong()
-	report("playing queue at index " + str(i))
 
 def pause():
 	player.pause()
@@ -416,23 +449,20 @@ def playlistCreate(name):
 		p = Playlist(name)
 		playlists.append(p)
 		report("created " + name)
-		writeData()
 
 def playlistCreateFromQueue(name):
 	if not isForbidden(name):
 		p = Playlist(name)
-		p.songURLs = songQueue.copy()
+		p.songs = songQueue.copy()
 		playlists.append(p)
 		report("created " + name + " from the queue")
-		writeData()
 
 def playlistCreateFrom(name, playlist):
 	if not isForbidden(name):
 		p = Playlist(name)
-		p.songURLs = playlist.songURLs.copy()
+		p.songs = playlist.songs.copy()
 		playlists.append(p)
 		report("created " + name + " from " + playlist.name)
-		writeData()
 
 def isForbidden(name):
 	for n in ForbiddenNames.fields:
@@ -441,31 +471,28 @@ def isForbidden(name):
 			return True
 	for p in playlists:
 		if name == p.name:
-			report("name is already exists")
+			report("name already exists")
 			return True
 	return False
 
 def playlistDelete(playlist):
 	playlists.remove(playlist)
 	report("deleted " + playlist.name)
-	writeData()
 
-def playlistAdd(songURL, playlist):
+def playlistAdd(song, playlist):
 	playlist.addSong(songURL)
-	report("added " + songURL + "to " + playlist.name)
-	writeData()
+	report("added " + song.title + "to " + playlist.name)
 
 def playlistRemove(index, playlist):
 	index = getNumberBetween(index, 0, len(songQueue) - 1)
-	del playlist.songURLs[index]
+	del playlist.songs[index]
 	report("removed song at index " + str(index) + " from " + playlist.name)
-	writeData()
 
 def playlistPlay(playlist):
 	global songQueue
 	global index
 
-	songQueue = playlist.songURLs.copy()
+	songQueue = playlist.songs.copy()
 	index = 0
 	report("replaced the queue with " + playlist.name)
 	playSong()
@@ -473,17 +500,15 @@ def playlistPlay(playlist):
 def playlistQueue(playlist):
 	global songQueue
 
-	songQueue = songQueue + playlist.songURLs
+	songQueue = songQueue + playlist.songs
 	report("added songs from " + playlist.name + " to the queue")
 	if not (player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused):
 		playSong()
 
 def playlistShuffle(playlist):
-	random.shuffle(playlist.songURLs)
+	random.shuffle(playlist.songs)
 	report("shuffled " + playlist.name)
-	writeData()
 
 def playlistClear(playlist):
-	playlist.songURLs.clear()
+	playlist.songs.clear()
 	report("cleared " + playlist.name)
-	writeData()

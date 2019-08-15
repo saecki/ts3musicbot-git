@@ -3,53 +3,100 @@ import multiprocessing
 import time
 import json
 import re
+import ts3
+import vlc
 import urllib.request
 from bs4 import BeautifulSoup
 
-#local imports
 import ts3musicbot as bot
+
 from common.classproperties import TS3MusicBotModule
 from common.classproperties import Command
 from common.classproperties import Argument
 from common.classproperties import Playlist
+from common.classproperties import Song
+
 from common.constants import Prefixes
 from common.constants import Commands
 from common.constants import Args
 from common.constants import ArgValues
 
+from .ts3clientquery import ClientQuery
+
 class CLI(TS3MusicBotModule):
 
 	def __init__(self):
 		super().__init__()
-		self.lastLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
-		self.report("waiting for a command")
+
+		self.clientQuery = ClientQuery()
+
+		bot.addThread(target=self.startKeepingAliveQueryConnection, daemon=True)
+		bot.addThread(target=self.startCheckingForTeamspeakCommand, daemon=True)
+		bot.addThread(target=self.startCheckingForTerminalCommand, daemon=True)
 
 	def update(self):
-		self.checkForTeamspeakCommand()
-		#self.checkForTerminalCommand()
+		msg = ""
+
+		if len(bot.songQueue) > 0:
+			msg = bot.songQueue[bot.index].title
+			
+			if bot.player.get_state() == vlc.State.Playing:
+				msg = "playing: " + msg
+			elif bot.player.get_state() == vlc.State.Paused:
+				msg = "paused: " + msg
+			else:
+				msg = ""
+
+			if bot.player.is_seekable():
+					msg += " | " + str(round(bot.player.get_position() * 100)) + "%"
+		
+		with bot.clientQueryLock:
+			self.clientQuery.setDescription(msg)
 	
 	def report(self, string):
 		print(string)
 		self.sendToChannel(string)
 
-	def checkForTeamspeakCommand(self):
-		#try:
-		currentLine = self.getLineCountOf(CLI.getTS3ChannelChatFilePath())
-		if  currentLine > self.lastLine:
-			with open(CLI.getTS3ChannelChatFilePath()) as f:
-				for line in f:
-					pass
-				string = CLI.stripTS3Chat(line)
-				command = CLI.stringToCommand(string)
-				self.handleCommand(command, Prefixes.Teamspeak)
-				self.lastLine = currentLine
-		#except:
-		#	self.report("couldn't retrieve new command")
+	#
+	#ts3clientquery
+	#
 
-	def checkForTerminalCommand(self):
-		string = input()
-		command = CLI.stringToCommand(string)
-		self.handleCommand(command)
+	def startKeepingAliveQueryConnection(self):
+		while bot.running:
+			with bot.clientQueryLock:
+				self.clientQuery.sendKeepalive()
+			time.sleep(200)
+
+	def startCheckingForTeamspeakCommand(self):
+		self.clientQuery.registerForTextEvents()
+
+		while bot.running:
+			string = self.clientQuery.listenForTextEvents()
+			if not string == None:
+				command = CLI.stringToCommand(string)
+				with bot.lock:
+					self.handleCommand(command, prefix=Prefixes.Teamspeak)
+
+	def sendToChannel(self, string):
+		with bot.clientQueryLock:
+			self.clientQuery.sendMessageToCurrentChannel(string)
+
+	#
+	#terminal
+	#
+
+	def startCheckingForTerminalCommand(self):
+		while bot.running:
+			try:
+				string = input()
+			except:
+				print("terminal input failed")
+			else:
+				if string == "exit":
+					bot.quit()
+				command = CLI.stringToCommand(string)
+				with bot.lock:
+					self.handleCommand(command)
 
 	#
 	#commands
@@ -89,6 +136,10 @@ class CLI(TS3MusicBotModule):
 					self.repeat(command)
 				elif command.name == Commands.List:
 					self.list()
+				elif command.name == Commands.Position:
+					self.position(command)				
+				elif command.name == Commands.Speed:
+					self.speed(command)
 				elif command.name == Commands.Volume:
 					self.volume(command)
 				elif command.name == Commands.Playlist:
@@ -100,59 +151,50 @@ class CLI(TS3MusicBotModule):
 		else:
 			self.report("wow that's impressive")
 
-	def stripTS3Chat(string):
-		string = re.sub("<.*?: ","", string)
-
-		return string
-
-
 	def stringToCommand(string):
 
-		string = string.rstrip()
+		if type(string) == str:
+			string = string.rstrip()
+			string = string.lower()
 
-		fields = string.split(" ")
+			fields = string.split(" ")
 
-		if len(fields) > 0:
-			commandName = fields[0]
+			if len(fields) > 0:
+				commandName = fields[0]
 
-			command = Command(commandName)
+				command = Command(commandName)
 
-			lastArg = None
-			value = False
-			
-			for i in range(1, len(fields)):
+				lastArg = None
+				value = False
 				
-				if value:	
-					lastArg.value = fields[i]
-					command.args.append(lastArg)
-
-					value = False
-				else:
-					lastArg = Argument(fields[i])
+				for i in range(1, len(fields)):
 					
-					if fields[i].endswith(":"):
-						value = True
-					else:
+					if value:	
+						lastArg.value = fields[i]
 						command.args.append(lastArg)
 
-			return command
+						value = False
+					else:
+						lastArg = Argument(fields[i])
+						
+						if fields[i].endswith(":"):
+							value = True
+						else:
+							command.args.append(lastArg)
 
-		else:
-			return None
+				return command
+
+		return None
+
+	def stripTS3Chat(string):
+		if not re.search("<.*?>.*?: ", string) == None:
+			string = re.sub("<.*?>.*?: ","", string)
+			return string
+		return None
 
 	#
-	#server query api
+	#convenient
 	#
-
-	def startServerQuery(self):
-		pass
-
-	def sendToChannel(self, string):
-		pass
-
-		#
-		#maths stuff
-		#
 
 	def getNumberBetween(number, min, max):
 		if number < min:
@@ -161,6 +203,14 @@ class CLI(TS3MusicBotModule):
 			return max
 		else:
 			return number
+
+	def getNumberFromString(self, string):
+		try:
+			num = float(string)
+		except:
+			self.report("not a number")
+			return None
+		return num
 
 	#
 	#file system
@@ -215,57 +265,35 @@ class CLI(TS3MusicBotModule):
 		if "https://youtu.be/" in url or "https://www.youtube.com/watch?v=" in url:
 			return True
 		else:
-			self.report("no valid youtube link")
+			self.report(url + " is no valid youtube url")
 			return False
 
-	def getYoutubeURLFromString(self, string):
+	def getYoutubeSongFromString(self, string):
 		try:
 			query = urllib.parse.quote(string)
 			url = "https://www.youtube.com/results?search_query=" + query
 			response = urllib.request.urlopen(url)
 			html = response.read()
-			soup = BeautifulSoup(html, 'html.parser')
-			
-			for vid in soup.findAll(attrs={'class':'yt-uix-tile-link'}):
-				return 'https://www.youtube.com' + vid['href']
+			soup = BeautifulSoup(html, "html.parser")
+
+			for vid in soup.findAll(attrs={"class":"yt-uix-tile-link"}):
+				youtubeUrl = "https://www.youtube.com" + vid["href"]
+				title = vid["title"]
+				if self.isYoutubeURL(youtubeUrl):
+					song = Song(youtubeUrl, title=title)
+					return song
 		except:
-			self.report("couldn't get get youtube url")
+			self.report("couldn't find youtube song")
 		
 		return None
 	
-	#
-	#queue
-	#
-
-	def play(self, command):
-		if len(command.args) > 0:
-			url = self.getYoutubeURLFromPlayCommand(command)
-			if not url == None:
-				bot.play(url)
-		else:
-			bot.play()
-
-	def playNext(self, command):
-		if len(command.args) > 0:
-			url = self.getYoutubeURLFromPlayCommand(command)
-			if not url == None:
-				bot.playNext(url)
-		else:
-			self.report("not enough Args")
-
-	def playNow(self, command):
-		if len(command.args) > 0:
-			url = self.getYoutubeURLFromPlayCommand(command)
-			if not url == None:
-				bot.playNow(url)
-		else:
-			self.report("not enough Args")
-
-	def getYoutubeURLFromPlayCommand(self, command):
+	def getYoutubeSongFromPlayCommand(self, command):
 		if self.isURL(command.args[0].name):
 			url = self.getURL(command.args[0].name)
 			if self.isYoutubeURL(url):
-				return url
+				title = getTitleFromYoutubeURL(url)
+				song = Song(url, title=title)
+				return song
 			else:
 				self.report("specified value is no youtube url")
 		else:
@@ -273,15 +301,81 @@ class CLI(TS3MusicBotModule):
 			for arg in command.args:
 				string += arg.name + " "
 
-			url = self.getYoutubeURLFromString(string)
+			song = self.getYoutubeSongFromString(string)
 			
-			if not url == None:
-				return url
+			if not song == None:
+				return song
 			else:
-				self.report("couldn't find any video")
+				self.report("couldn't find any youtube song")
 		
 		return None
 
+	def getYoutubeSongFromPlaylistCommand(self, command):
+		if isURL(command.args[0].value):
+			url = self.getURL(command.args[0].value)
+			if isYoutubeURL(url):
+				title = getTitleFromYoutubeURL(url)
+				song = Song(url, title=title)
+				return song
+			else:
+				self.report("specified value is no youtube url")
+		else:
+			string = command.args[0].value + " "
+			newArgs = command.args[1:]
+
+			for arg in newArgs:
+				string += arg.name + " "
+
+			song = self.getYoutubeSongFromString(string)
+			
+			if not song == None:
+				return song
+			else:
+				self.report("couldn't find any youtube song")
+		
+		return None
+
+	def getTitleFromYoutubeURL(self, url):
+		try:
+			response = urllib.request.urlopen(url)
+			html = response.read()
+			soup = BeautifulSoup(html, "html.parser")
+			vid = soup.find(attrs={"class":"yt-uix-tile-link"})
+			title = vid["title"]
+
+			return title
+		except:
+			self.report("couldn't get title from youtube url")
+
+		return None
+
+	#
+	#queue
+	#
+
+	def play(self, command):
+		if len(command.args) > 0:
+			song = self.getYoutubeSongFromPlayCommand(command)
+			if not song == None:
+				bot.play(song)
+		else:
+			bot.play()
+
+	def playNext(self, command):
+		if len(command.args) > 0:
+			song = self.getYoutubeSongFromPlayCommand(command)
+			if not song == None:
+				bot.playNext(song)
+		else:
+			self.report("not enough Args")
+
+	def playNow(self, command):
+		if len(command.args) > 0:
+			song = self.getYoutubeSongFromPlayCommand(command)
+			if not song == None:
+				bot.playNow(song)
+		else:
+			self.report("not enough Args")
 
 	def playQueue(self, command):
 		if len(command.args) > 0:
@@ -336,13 +430,16 @@ class CLI(TS3MusicBotModule):
 	def list(self):
 		index = 0
 
-		self.report("queue:")
+		msg = "queue:\n"
 		for s in bot.songQueue:
 			if index == bot.index:
-				self.report("> (" + str(index) + ") " + s)
+				msg += ">"
 			else:
-				self.report("  (" + str(index) + ") " + s)
+				msg += " "
+			msg += " (" + str(index) + ") " + s.title + " [url=" + s.url + "]URL[/url]\n"
+			
 			index += 1
+		self.report(msg)
 
 	def repeat(self, command):
 		if len(command.args) > 0:
@@ -355,34 +452,42 @@ class CLI(TS3MusicBotModule):
 		else:
 			bot.repeat(1)
 
+	def position(self, command):
+		if len(command.args) > 0:
+			string = command.args[0].name
+			position = self.getNumberFromString(string)
+
+			if not position == None:
+				bot.setPosition(position)
+
+	def speed(self, command):
+		if len(command.args) > 0:
+			string = command.args[0].name
+			speed = self.getNumberFromString(string)
+
+			if not speed == None:
+				bot.setSpeed(speed)
+
 	def volume(self, command):
 		if len(command.args) > 0:
 			if command.args[0].name.startswith("+"):
 				string = command.args[0].name[1:]
-				volume = self.getNumberFromString(string)
+				volume = int(self.getNumberFromString(string))
 				
 				if not volume == None:
 					bot.plusVolume(volume)
 
 			elif command.args[0].name.startswith("-"):
 				string = command.args[0].name[1:]
-				volume = self.getNumberFromString(string)
+				volume = int(self.getNumberFromString(string))
 				
 				if not volume == None:
 					bot.minusVolume(volume)
 
 			else:
-				volume = self.getNumberFromString(command.args[0].name)
+				volume = int(self.getNumberFromString(command.args[0].name))
 				if not volume == None:
 					bot.setVolume(volume)
-
-	def getNumberFromString(self, string):
-		try:
-			num = int(string)
-		except:
-			self.report("not a number")
-			return None
-		return num
 
 	#
 	#playlist
@@ -445,7 +550,9 @@ class CLI(TS3MusicBotModule):
 					if self.isURL(args[0].value):
 						url = self.getURL(args[0].value)
 						if self.isYoutubeURL(url):
-							bot.playlistAdd(url, p)
+							title = getTitleFromYoutubeURL(url)
+							song = Song(url, title=title)
+							bot.playlistAdd(song, p)
 						else:
 							self.report("specified value is no youtube url")
 					else:
@@ -478,29 +585,6 @@ class CLI(TS3MusicBotModule):
 				self.report("specified argument not correct")
 		else:
 			self.report("not enough Args")
-
-	def getYoutubeURLFromPlaylistCommand(self, command):
-		if isURL(command.args[0].value):
-			url = self.getURL(command.args[0].value)
-			if isYoutubeURL(url):
-				return url
-			else:
-				self.report("specified value is no youtube url")
-		else:
-			string = command.args[0].value + " "
-			newArgs = command.args[1:]
-
-			for arg in newArgs:
-				string += arg.name + " "
-
-			url = self.getYoutubeURLFromString(string)
-			
-			if not url == None:
-				return url
-			else:
-				self.report("couldn't find any video")
-		
-		return None
 
 	def playlistPlay(self, args):
 		p = bot.getPlaylist(args[0].value)
@@ -536,19 +620,24 @@ class CLI(TS3MusicBotModule):
 		else:
 			p = bot.getPlaylist(args[0].value)
 			if not p == None:
-				self.playlistListPlaylist(p)
+				msg = self.playlistListPlaylist(p)
+				self.report(msg)
 			else:
 				self.report("playlist not found")
 
 	def playlistListAll(self):
-		self.report("playlists:")
+		msg = "playlists:\n"
 		for p in bot.playlists:
-			self.report("")
-			self.playlistListPlaylist(p)
+			msg += "\n"
+			msg += self.playlistListPlaylist(p)
+
+		self.report(msg)
 
 	def playlistListPlaylist(self, playlist):
 		index = 0
-		self.report(playlist.name)
-		for s in playlist.songURLs:
-			self.report("(" + str(index) + ")   " + s)
+		msg = playlist.name + "\n"
+		for s in playlist.songs:
+			msg += "(" + str(index) + ") " + s.title + " [url=" + s.url + "]URL[/url]\n"
 			index += 1
+
+		return msg

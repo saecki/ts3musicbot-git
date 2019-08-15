@@ -27,6 +27,8 @@ class Commands:
 	Shuffle = "shuffle"
 	Repeat = "repeat"
 	List = "list"
+	Position = "position"
+	Speed = "speed"
 	Volume = "volume"
 	Playlist = "playlist"
 

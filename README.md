@@ -44,6 +44,8 @@ An example command written on teamspeak could look like this:
 | stop repeating                                     | ```Prefix```repeat stop |
 | shuffling the queue                                | ```Prefix```shuffle |
 | listing the queue                                  | ```Prefix```list |
+| setting the playback position in percent           | ```Prefix```position ```value```|
+| setting the playback speed in percent              | ```Prefix```speed ```value```|
 | setting the volume to a value between 0 to 120     | ```Prefix```volume ```value```|
 | adding a value to the volume                       | ```Prefix```volume ```+value```|
 | subtracting a value from the volume                | ```Prefix```volume ```-value```|
