@@ -107,3 +107,10 @@ An example command written on teamspeak could look like this:
 - **Queue the playlist myplaylist:**  
 
   ```playlist queue: myplaylist```  
+
+## Dependencies
+- Python 3.7
+- TeamSpeak 3 client
+   - clientquery plugin
+- VLC media player 3.0
+- VB-CABLE (or another app for routing audio as an input to teamspeak)
