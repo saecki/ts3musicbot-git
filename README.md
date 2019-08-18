@@ -9,8 +9,8 @@ A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
   - [Prefixes](#prefixes)
   - [Commands](#commands)
     - [Examples](#examples)
-    - [Teamspeak](#teamspeak)
-    - [Terminal](#terminal)
+      - [Teamspeak](#teamspeak)
+      - [Terminal](#terminal)
 - [Dependencies](#dependencies)
 - [Setup](#setup)
 
