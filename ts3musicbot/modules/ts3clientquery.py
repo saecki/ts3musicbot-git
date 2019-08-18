@@ -48,11 +48,11 @@ class ClientQuery:
 				with open(FileSystem.getClientQueryFilePath(), "w") as jsonfile:
 					data = {}
 					data["APIKEY"] = "YOURAPIKEY"
-					data["NICKNAME"] = "BOTNICKNAME"
+					data["NICKNAME"] = "MUSICBOT"
 
 					json.dump(data, jsonfile)
 
-					print("created ts3clientquery.json file in APPDATA/roaming/TS3MusicBot/ you'll have to enter your ts3clientquery apikey which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
+					print("created a config.json file in ts3musicbot/data you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
 			except FileExistsError:	
 				print("couldn't create ts3clientquery config file")
 		return False
@@ -75,9 +75,19 @@ class ClientQuery:
 			clientnickname = clientvariables[0]["client_nickname"]
 
 			if not self.NICKNAME == clientnickname:
-				self.sendingConnection.clientupdate(client_nickname=self.NICKNAME)
+				self.setNickname(self.NICKNAME)
 		except:
 			print("couldn't update nickname")
+
+	def getClientID(self, ts3conn):
+		try:
+			clientinfo = ts3conn.whoami()
+			channelID = clientinfo[0]["clid"]
+			return channelID
+		except:
+			print("couldn't get client id")
+
+		return None
 
 	def getCurrentChannelID(self, ts3conn):
 		try:
@@ -91,10 +101,11 @@ class ClientQuery:
 
 	def getDatabaseClientID(self):
 		try:
+			clid = self.getClientID(self.sendingConnection)
 			clients = self.sendingConnection.clientlist()
 
 			for c in clients:
-				if c["client_nickname"] == self.NICKNAME:
+				if c["clid"] == clid:
 					cldbid = c["client_database_id"]
 					return cldbid
 		except:
@@ -120,6 +131,13 @@ class ClientQuery:
 
 		time.sleep(0.1)
 
+	def setNickname(self, nickname):
+		try:
+			self.sendingConnection.clientupdate(client_nickname=nickname)
+		except:
+			print("couldn't update nickname")
+
+
 	def setDescription(self, description):
 		cldbid = self.getDatabaseClientID()
 
@@ -138,7 +156,8 @@ class ClientQuery:
 
 		try:
 			event = self.receivingConnection.wait_for_event(timeout=timeout)
-			if not event[0]["invokername"] == self.NICKNAME:
+			clid = self.getClientID(self.receivingConnection)
+			if not event[0]["invokerid"] == clid:
 				print(event[0]["msg"])
 				return event[0]["msg"]
 		except:

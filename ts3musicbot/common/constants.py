@@ -1,6 +1,7 @@
 class Modules:
 	CLI = "c"
 	WebInterface = "w"
+	TerminalOnly = "t"
 
 class JSONFields:
 	Playlists = "playlists"

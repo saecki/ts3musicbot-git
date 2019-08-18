@@ -1,10 +1,23 @@
 # ts3musicbot
 A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
 
-## Command Line Interface (CLI)
+
+## Table of Content
+- [Command Line Interface](#command-line-interface)
+  - [Usage](#usage)
+  - [Syntax](#syntax)
+  - [Prefixes](#prefixes)
+  - [Commands](#commands)
+    - [Examples](#examples)
+    - [Teamspeak](#teamspeak)
+    - [Terminal](#terminal)
+- [Dependencies](#dependencies)
+- [Setup](#setup)
+
+## Command Line Interface
 
 ### Usage
-To control the bot on teamspeak just send a command to the channel the bot is currently inside.  
+To control the bot on teamspeak send a command to the channel the bot is currently inside. 
 
 ### Syntax
 Commands are built upon a structure.
@@ -45,7 +58,11 @@ An example command written on teamspeak could look like this:
 | shuffling the queue                                | ```Prefix```shuffle |
 | listing the queue                                  | ```Prefix```list |
 | setting the playback position in percent           | ```Prefix```position ```value```|
+| adding a value to the position                     | ```Prefix```position ```+value```|
+| subtracting a value from the position              | ```Prefix```position ```-value```|
 | setting the playback speed in percent              | ```Prefix```speed ```value```|
+| adding a value to the speed                        | ```Prefix```speed ```+value```|
+| subtracting a value from the speed                 | ```Prefix```speed ```-value```|
 | setting the volume to a value between 0 to 120     | ```Prefix```volume ```value```|
 | adding a value to the volume                       | ```Prefix```volume ```+value```|
 | subtracting a value from the volume                | ```Prefix```volume ```-value```|
@@ -109,8 +126,15 @@ An example command written on teamspeak could look like this:
   ```playlist queue: myplaylist```  
 
 ## Dependencies
-- Python 3.7
-- TeamSpeak 3 client
-   - clientquery plugin
-- VLC media player 3.0
-- VB-CABLE (or another app for routing audio as an input to teamspeak)
+- [Python 3.7](https://www.python.org/downloads/)
+   - [requirements.txt](https://github.com/Saecki/ts3musicbot-git/blob/master/ts3musicbot/requirements.txt)
+- [TeamSpeak 3 client](https://www.teamspeak.com/en/downloads/)
+   - [ClientQuery plugin](https://www.myteamspeak.com/addons/943dd816-7ef2-48d7-82b8-d60c3b9b10b3)
+- [VLC media player 3.0](https://www.videolan.org/vlc/)
+- [VB-CABLE](https://www.vb-audio.com/Cable/) (or another app for routing audio as an input to teamspeak)
+
+## Setup
+- Clone or download ts3musicbot-git
+- Download and install Python, TeamSpeak, VC media player and VB-CABLE
+- Navigate into the ts3musicbot-git/ts3musicbot directory that you've downloaded and install all python dependencies by executing the command: ```pip3 install -r requirements.txt```.
+- Install the ClientQuery plugin in TeamSpeak directly by going to: Tools - Options - Addons - Browse online and then searching ClientQuery and installing it

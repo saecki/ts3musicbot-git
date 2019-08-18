@@ -5,7 +5,7 @@ import random
 import telnetlib
 import threading
 import time
-import vlc 
+import vlc
 
 from common.classproperties import FileSystem
 from common.classproperties import Playlist
@@ -40,6 +40,7 @@ def run(args=Modules.CLI):
 	global loop
 	global lock
 	global clientQueryLock
+	global terminalOnly
 
 	if not createVlcPlayer():
 		exit()
@@ -51,6 +52,11 @@ def run(args=Modules.CLI):
 
 	mainThread = addThread(target=mainLoop)
 	addThread(target=frequentlyWriteData, daemon=True)
+
+	if Modules.TerminalOnly in args:
+		print("running in terminal only mode")
+		terminalOnly = True
+
 
 	if Modules.CLI in args:
 		modules.append(CLI())
@@ -179,6 +185,8 @@ def readData():
 			
 			try:
 				index = data[JSONFields.Index]
+				if not index < len(songQueue):
+					index = len(songQueue - 1)
 			except:
 				report("couldn't read index")
 			
@@ -231,7 +239,6 @@ def playSong():
 		startNewThread(target=playAudioFromSong, args=(song,), daemon=True)
 	else:
 		report("there is nothing to play")
-
 def playAudioFromSong(song):
 	try:
 		playurl = getBestYoutubeAudioURL(song.url)
@@ -250,6 +257,30 @@ def isPlayingOrPaused():
 		return True
 	return False
 
+def getPlaybackInfo():
+	msg = ""
+
+	if len(songQueue) > 0:
+		msg = songQueue[index].title
+		
+		if player.get_state() == vlc.State.Playing:
+			msg = "playing: " + msg
+		elif player.get_state() == vlc.State.Paused:
+			msg = "paused: " + msg
+		else:
+			msg = ""
+
+		if player.is_seekable():
+				msg += " | " + str(round(player.get_position() * 100)) + "%"
+
+	return msg
+
+def getCurrentSongTitle():
+	if isPlayingOrPaused():
+		return songQueue[index].title
+	else:
+		return None
+		
 def setPosition(position):
 	position = getNumberBetween(position, 0, 100)
 	position = position / 100
@@ -264,6 +295,12 @@ def setPosition(position):
 		pass
 	report("couldn't update position")
 
+def plusPosition(position):
+	setPosition(player.get_position() * 100 + position)
+
+def minusPosition(position):
+	setPosition(player.get_position() * 100 - position)
+
 def setSpeed(speed):
 	rate = getNumberBetween(speed, 25, 400)
 	rate = rate / 100
@@ -277,6 +314,12 @@ def setSpeed(speed):
 	except:
 		pass
 	report("couldn't update speed")
+
+def plusSpeed(speed):
+	setSpeed(player.get_rate() * 100 + speed)
+
+def minusSpeed(speed):
+	setSpeed(player.get_rate() * 100 - speed)
 
 def setVolume(volume):
 	try:
@@ -342,26 +385,32 @@ def remove(i):
 		if i == index:
 			removeCurrent()
 		else:
+			title = songQueue[i].title
+
 			del songQueue[i]
-			if index >= len(songQueue):
-				index = len(songQueue) - 1
-			report("removed song at index " + str(i) + " from the queue")
+			if i < index:
+				index -= 1
+			report("removed song " + title + " at index " + str(i) + " from the queue")
 	else:
 		report("no songs to remove")
 
 def removeNext():
 	if index < len(songQueue) - 1:
+		title = songQueue[index + 1].title
+
 		del songQueue[index + 1]
-		report("removed next song from the queue")
+		report("removed next song " + title + " from the queue")
 	else:
-		report("already playling last song")
+		report("already playing last song")
 
 def removeCurrent():
 	global index
 
 	if len(songQueue) > 0:
+		title = songQueue[index].title
+
 		del songQueue[index]
-		report("removed current song from the queue")
+		report("removed current song " + title + " from the queue")
 		if index >= len(songQueue) and not index == 0:
 			index = len(songQueue) - 1
 			if isPlayingOrPaused():

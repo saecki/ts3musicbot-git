@@ -5,7 +5,6 @@ import re
 import time
 import ts3
 import urllib.request
-import vlc
 
 from bs4 import BeautifulSoup
 
@@ -29,7 +28,9 @@ class CLI(TS3MusicBotModule):
 	def __init__(self):
 		super().__init__()
 
-		self.clientQuery = ClientQuery()
+		if not bot.terminalOnly:
+			self.clientQuery = ClientQuery()
+			self.nicknameIndex = 0
 
 		if not bot.terminalOnly:
 			bot.addThread(target=self.startKeepingAliveQueryConnection, daemon=True)
@@ -39,6 +40,7 @@ class CLI(TS3MusicBotModule):
 
 	def update(self):
 		self.updateDescription()
+		#self.updateNickname()
 	
 	def report(self, string):
 		print(string)
@@ -69,22 +71,30 @@ class CLI(TS3MusicBotModule):
 			with bot.clientQueryLock:
 				self.clientQuery.sendMessageToCurrentChannel(string)
 
+	def updateNickname(self):
+		if not bot.terminalOnly:
+			msg = bot.getCurrentSongTitle()
+
+			if not msg == None:
+				if self.nicknameIndex > len(msg) - 5:
+					self.nicknameIndex = 0
+				
+				msg = msg[self.nicknameIndex:]
+
+				nickname = msg[:30] if len(msg) > 30 else msg
+
+				self.nicknameIndex += 1
+			
+			else:
+				nickname = self.clientQuery.NICKNAME
+
+			with bot.clientQueryLock:
+				self.clientQuery.setNickname(nickname)
+
+
 	def updateDescription(self):
 		if not bot.terminalOnly:
-			msg = ""
-
-			if len(bot.songQueue) > 0:
-				msg = bot.songQueue[bot.index].title
-				
-				if bot.player.get_state() == vlc.State.Playing:
-					msg = "playing: " + msg
-				elif bot.player.get_state() == vlc.State.Paused:
-					msg = "paused: " + msg
-				else:
-					msg = ""
-
-				if bot.player.is_seekable():
-						msg += " | " + str(round(bot.player.get_position() * 100)) + "%"
+			msg = bot.getPlaybackInfo()
 			
 			with bot.clientQueryLock:
 				self.clientQuery.setDescription(msg)
@@ -462,19 +472,45 @@ class CLI(TS3MusicBotModule):
 
 	def position(self, command):
 		if len(command.args) > 0:
-			string = command.args[0].name
-			position = self.getNumberFromString(string)
+			if command.args[0].name.startswith("+"):
+				string = command.args[0].name[1:]
+				position = self.getNumberFromString(string)
+				
+				if not position == None:
+					bot.plusPosition(position)
 
-			if not position == None:
-				bot.setPosition(position)
+			elif command.args[0].name.startswith("-"):
+				string = command.args[0].name[1:]
+				position = self.getNumberFromString(string)
+				
+				if not position == None:
+					bot.minusPosition(position)
+
+			else:
+				position = self.getNumberFromString(command.args[0].name)
+				if not position == None:
+					bot.setPosition(position)
 
 	def speed(self, command):
 		if len(command.args) > 0:
-			string = command.args[0].name
-			speed = self.getNumberFromString(string)
+			if command.args[0].name.startswith("+"):
+				string = command.args[0].name[1:]
+				speed = self.getNumberFromString(string)
+				
+				if not speed == None:
+					bot.plusSpeed(speed)
 
-			if not speed == None:
-				bot.setSpeed(speed)
+			elif command.args[0].name.startswith("-"):
+				string = command.args[0].name[1:]
+				speed = self.getNumberFromString(string)
+				
+				if not speed == None:
+					bot.minusSpeed(speed)
+
+			else:
+				speed = self.getNumberFromString(command.args[0].name)
+				if not speed == None:
+					bot.setSpeed(speed)
 
 	def volume(self, command):
 		if len(command.args) > 0:
