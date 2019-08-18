@@ -33,6 +33,28 @@ class Commands:
 	Volume = "volume"
 	Playlist = "playlist"
 
+	Commands = {
+		Play : ("play", "p"),
+		PlayNext : ("playnext", "pnx"),
+		PlayNow : ("playnow", "pnw"),
+		PlayQueue : ("playqueue", "pq"),
+		Remove : ("remove", "rm"),
+		RemoveNext : ("removenext", "rn"),
+		RemoveCurrent: ("removecurrent", "rc"),
+		Pause : ("pause", "h"),
+		Next : ("next", "n"),
+		Previous : ("prev", "pr"),
+		Stop : ("stop", "s"),
+		Clear : ("clear", "c"),
+		Shuffle : ("shuffle", "sh"),
+		Repeat : ("repeat", "rp"),
+		List : ("list", "ls"),
+		Position : ("position", "ps"),
+		Speed : ("speed", "sp"),
+		Volume : ("volume", "v"),
+		Playlist : ("playlist", "pl"),
+		}
+
 class Args:
 	Create = "create:"
 	Delete = "delete:"

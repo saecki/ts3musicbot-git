@@ -38,6 +38,8 @@ class CLI(TS3MusicBotModule):
 		
 		bot.addThread(target=self.startCheckingForTerminalCommand, daemon=True)
 
+		self.report("waiting for a command")
+
 	def update(self):
 		self.updateDescription()
 		#self.updateNickname()
@@ -124,43 +126,43 @@ class CLI(TS3MusicBotModule):
 		if not command == None:
 			if command.name.startswith(prefix):
 				command.name = command.name[len(prefix):]
-				if command.name == Commands.Play:
+				if command.name in Commands.Commands[Commands.Play]:
 					self.play(command)
-				elif command.name == Commands.PlayNext:
+				elif command.name in Commands.Commands[Commands.PlayNext]:
 					self.playNext(command)
-				elif command.name == Commands.PlayNow:
+				elif command.name in Commands.Commands[Commands.PlayNow]:
 					self.playNow(command)
-				elif command.name == Commands.PlayQueue:
+				elif command.name in Commands.Commands[Commands.PlayQueue]:
 					self.playQueue(command)
-				elif command.name == Commands.Remove:
+				elif command.name in Commands.Commands[Commands.Remove]:
 					self.remove(command)
-				elif command.name == Commands.RemoveNext:
+				elif command.name in Commands.Commands[Commands.RemoveNext]:
 					self.removeNext()
-				elif command.name == Commands.RemoveCurrent:
+				elif command.name in Commands.Commands[Commands.RemoveCurrent]:
 					self.removeCurrent()
-				elif command.name == Commands.Pause:
+				elif command.name in Commands.Commands[Commands.Pause]:
 					self.pause()
-				elif command.name == Commands.Previous:
+				elif command.name in Commands.Commands[Commands.Previous]:
 					self.previous()
-				elif command.name == Commands.Next:
+				elif command.name in Commands.Commands[Commands.Next]:
 					self.next()
-				elif command.name == Commands.Stop:
+				elif command.name in Commands.Commands[Commands.Stop]:
 					self.stop()
-				elif command.name == Commands.Clear:
+				elif command.name in Commands.Commands[Commands.Clear]:
 					self.clear()
-				elif command.name == Commands.Shuffle:
+				elif command.name in Commands.Commands[Commands.Shuffle]:
 					self.shuffle()
-				elif command.name == Commands.Repeat:
+				elif command.name in Commands.Commands[Commands.Repeat]:
 					self.repeat(command)
-				elif command.name == Commands.List:
+				elif command.name in Commands.Commands[Commands.List]:
 					self.list()
-				elif command.name == Commands.Position:
+				elif command.name in Commands.Commands[Commands.Position]:
 					self.position(command)				
-				elif command.name == Commands.Speed:
+				elif command.name in Commands.Commands[Commands.Speed]:
 					self.speed(command)
-				elif command.name == Commands.Volume:
+				elif command.name in Commands.Commands[Commands.Volume]:
 					self.volume(command)
-				elif command.name == Commands.Playlist:
+				elif command.name in Commands.Commands[Commands.Playlist]:
 					self.playlist(command)
 				else:
 					self.report("the command: " + command.name + " wasn't found")

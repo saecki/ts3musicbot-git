@@ -74,11 +74,20 @@ def quit():
 	exit()
 
 def startNewThread(target=None, args=None, daemon=False):
-	t = addThread(target=target, args=args, daemon=daemon)
+	t = createThread(target=target, args=args, daemon=daemon)
 	if not t == None:
 		t.start()
 
+	return t
+
 def addThread(target=None, args=None, daemon=False):
+	t = createThread(target=target, args=args, daemon=daemon)
+	if not t == None:
+		threads.append(t)
+
+	return t
+
+def createThread(target=None, args=None, daemon=False):
 	if not target == None:
 		t = None
 		if args == None:
@@ -86,7 +95,6 @@ def addThread(target=None, args=None, daemon=False):
 		else:
 			t = threading.Thread(target=target, args=args)
 		t.setDaemon(daemon)
-		threads.append(t)
 
 		return t
 	return None
