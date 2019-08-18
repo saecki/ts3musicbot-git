@@ -1,12 +1,14 @@
 import os
-from abc import ABC, abstractmethod
+
+from abc import ABC
+from abc import abstractmethod
 
 class FileSystem:
 
 	def getConfigFolderPath():
-		path = os.getenv("APPDATA")
+		path = os.path.abspath(".")
 		path += os.path.sep
-		path += "TS3MusicBot"
+		path += "data"
 
 		return path
 
@@ -14,7 +16,7 @@ class FileSystem:
 		path = FileSystem.getConfigFolderPath()
 		if len(path) > 0:
 			path += os.path.sep
-		path += "config.json"
+		path += "data.json"
 
 		return path
 
@@ -22,39 +24,9 @@ class FileSystem:
 		path = FileSystem.getConfigFolderPath()
 		if len(path) > 0:
 			path += os.path.sep
-		path += "ts3clientquery.json"
+		path += "config.json"
 
 		return path
-
-	def getTS3ChannelChatFilePath():
-		p = os.getenv("APPDATA")
-		p += os.path.sep
-		p += "TS3Client\\chats"
-
-		all_subdirs = FileSystem.getAllSubdirsOf(p)
-		latest_subdir = max(all_subdirs, key=os.path.getmtime)
-
-		path = latest_subdir
-		path += os.path.sep
-		path += "channel.txt"
-
-		return path
-
-	def getAllSubdirsOf(b="."):
-		result = []
-		for d in os.listdir(b):
-			bd = os.path.join(b, d)
-			if os.path.isdir(bd): result.append(bd)
-
-		return result
-
-	def getLineCountOf(path):
-		try:
-			return sum(1 for line in open(path))
-		except:
-			pass
-		return 0
-
 
 class TS3MusicBotModule:
 

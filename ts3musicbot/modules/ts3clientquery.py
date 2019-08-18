@@ -1,6 +1,8 @@
-import ts3
 import json
 import time
+import ts3
+
+import ts3musicbot as bot
 
 from common.classproperties import FileSystem
 
@@ -10,12 +12,17 @@ class ClientQuery:
 		self.APIKEY = ""
 		self.NICKNAME = ""
 		self.HOST = "localhost"
-		self.lastLine = FileSystem.getLineCountOf(FileSystem.getTS3ChannelChatFilePath())
 
 		self.readData()
 		self.sendingConnection = self.connectAndAuthenticate(self.HOST, self.APIKEY)
 		self.receivingConnection = self.connectAndAuthenticate(self.HOST, self.APIKEY)
-		self.updateBot()
+
+		if self.sendingConnection == None or self.receivingConnection == None:
+			print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
+			print("running in terminal only mode")
+			bot.terminalOnly = True
+		else:
+			self.updateBot()
 
 	def readData(self):
 
@@ -45,7 +52,7 @@ class ClientQuery:
 
 					json.dump(data, jsonfile)
 
-					print("created ts3clientquery.json file in APPDATA/roaming/TS3MusicBot/ you'll have to enter the name of the bot the your ts3clientquery apikey")
+					print("created ts3clientquery.json file in APPDATA/roaming/TS3MusicBot/ you'll have to enter your ts3clientquery apikey which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
 			except FileExistsError:	
 				print("couldn't create ts3clientquery config file")
 		return False
@@ -61,16 +68,16 @@ class ClientQuery:
 		return None
 
 	def updateBot(self):
-		clientinfo = self.sendingConnection.whoami()
-		clientid = clientinfo[0]["clid"]
-		clientvariables = self.sendingConnection.clientvariable(clientid, "client_nickname")
-		clientnickname = clientvariables[0]["client_nickname"]
+		try:
+			clientinfo = self.sendingConnection.whoami()
+			clientid = clientinfo[0]["clid"]
+			clientvariables = self.sendingConnection.clientvariable(clientid, "client_nickname")
+			clientnickname = clientvariables[0]["client_nickname"]
 
-		if not self.NICKNAME == clientnickname:
-			try:
+			if not self.NICKNAME == clientnickname:
 				self.sendingConnection.clientupdate(client_nickname=self.NICKNAME)
-			except:
-				print("couldn't update nickname")
+		except:
+			print("couldn't update nickname")
 
 	def getCurrentChannelID(self, ts3conn):
 		try:
@@ -122,7 +129,10 @@ class ClientQuery:
 			print("couldn't update description")
 
 	def registerForTextEvents(self):
-		self.receivingConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
+		try:
+			self.receivingConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
+		except:
+			print("couldn't register for text events from the teamspeak client")
 
 	def listenForTextEvents(self, timeout=60):
 
@@ -137,4 +147,7 @@ class ClientQuery:
 		return None
 
 	def sendKeepalive(self):
-		self.receivingConnection.send_keepalive()
+		try:
+			self.receivingConnection.send_keepalive()
+		except:
+			print("couldn't send keep alive to the teamspeak client")

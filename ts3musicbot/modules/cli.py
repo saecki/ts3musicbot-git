@@ -1,25 +1,26 @@
-import os
-import multiprocessing
-import time
 import json
+import multiprocessing
+import os
 import re
+import time
 import ts3
-import vlc
 import urllib.request
+import vlc
+
 from bs4 import BeautifulSoup
 
 import ts3musicbot as bot
 
-from common.classproperties import TS3MusicBotModule
-from common.classproperties import Command
 from common.classproperties import Argument
+from common.classproperties import Command
 from common.classproperties import Playlist
 from common.classproperties import Song
+from common.classproperties import TS3MusicBotModule
 
-from common.constants import Prefixes
-from common.constants import Commands
-from common.constants import Args
 from common.constants import ArgValues
+from common.constants import Args
+from common.constants import Commands
+from common.constants import Prefixes
 
 from .ts3clientquery import ClientQuery
 
@@ -30,28 +31,14 @@ class CLI(TS3MusicBotModule):
 
 		self.clientQuery = ClientQuery()
 
-		bot.addThread(target=self.startKeepingAliveQueryConnection, daemon=True)
-		bot.addThread(target=self.startCheckingForTeamspeakCommand, daemon=True)
+		if not bot.terminalOnly:
+			bot.addThread(target=self.startKeepingAliveQueryConnection, daemon=True)
+			bot.addThread(target=self.startCheckingForTeamspeakCommand, daemon=True)
+		
 		bot.addThread(target=self.startCheckingForTerminalCommand, daemon=True)
 
 	def update(self):
-		msg = ""
-
-		if len(bot.songQueue) > 0:
-			msg = bot.songQueue[bot.index].title
-			
-			if bot.player.get_state() == vlc.State.Playing:
-				msg = "playing: " + msg
-			elif bot.player.get_state() == vlc.State.Paused:
-				msg = "paused: " + msg
-			else:
-				msg = ""
-
-			if bot.player.is_seekable():
-					msg += " | " + str(round(bot.player.get_position() * 100)) + "%"
-		
-		with bot.clientQueryLock:
-			self.clientQuery.setDescription(msg)
+		self.updateDescription()
 	
 	def report(self, string):
 		print(string)
@@ -78,8 +65,29 @@ class CLI(TS3MusicBotModule):
 					self.handleCommand(command, prefix=Prefixes.Teamspeak)
 
 	def sendToChannel(self, string):
-		with bot.clientQueryLock:
-			self.clientQuery.sendMessageToCurrentChannel(string)
+		if not bot.terminalOnly:
+			with bot.clientQueryLock:
+				self.clientQuery.sendMessageToCurrentChannel(string)
+
+	def updateDescription(self):
+		if not bot.terminalOnly:
+			msg = ""
+
+			if len(bot.songQueue) > 0:
+				msg = bot.songQueue[bot.index].title
+				
+				if bot.player.get_state() == vlc.State.Playing:
+					msg = "playing: " + msg
+				elif bot.player.get_state() == vlc.State.Paused:
+					msg = "paused: " + msg
+				else:
+					msg = ""
+
+				if bot.player.is_seekable():
+						msg += " | " + str(round(bot.player.get_position() * 100)) + "%"
+			
+			with bot.clientQueryLock:
+				self.clientQuery.setDescription(msg)
 
 	#
 	#terminal

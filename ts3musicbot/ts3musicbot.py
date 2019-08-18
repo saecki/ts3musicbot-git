@@ -1,20 +1,20 @@
-import pafy
-import vlc 
-import os
-import telnetlib
-import time
-import threading
 import json
+import os
+import pafy
 import random
+import telnetlib
+import threading
+import time
+import vlc 
 
 from common.classproperties import FileSystem
-from common.classproperties import TS3MusicBotModule
 from common.classproperties import Playlist
 from common.classproperties import Song
+from common.classproperties import TS3MusicBotModule
 
-from common.constants import Modules
-from common.constants import JSONFields
 from common.constants import ForbiddenNames
+from common.constants import JSONFields
+from common.constants import Modules
 
 from modules.cli import CLI
 
@@ -33,6 +33,8 @@ lock = None
 clientQueryLock = None
 
 running = True
+
+terminalOnly = False
 
 def run(args=Modules.CLI):
 	global loop
@@ -419,7 +421,14 @@ def clear():
 	report("cleared queue")
 
 def shuffle():
+	fixedSong = songQueue[index]
+	fixedIndex = index
+
 	random.shuffle(songQueue)
+
+	newIndex = songQueue.index(fixedSong)
+	songQueue[fixedIndex], songQueue[newIndex] = songQueue[newIndex], songQueue[fixedIndex]
+
 	report("shuffled queue")
 
 def repeat(mode):
