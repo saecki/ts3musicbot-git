@@ -126,43 +126,43 @@ class CLI(TS3MusicBotModule):
 		if not command == None:
 			if command.name.startswith(prefix):
 				command.name = command.name[len(prefix):]
-				if command.name in Commands.Commands[Commands.Play]:
+				if command.name in Commands.Play:
 					self.play(command)
-				elif command.name in Commands.Commands[Commands.PlayNext]:
+				elif command.name in Commands.PlayNext:
 					self.playNext(command)
-				elif command.name in Commands.Commands[Commands.PlayNow]:
+				elif command.name in Commands.PlayNow:
 					self.playNow(command)
-				elif command.name in Commands.Commands[Commands.PlayQueue]:
+				elif command.name in Commands.PlayQueue:
 					self.playQueue(command)
-				elif command.name in Commands.Commands[Commands.Remove]:
+				elif command.name in Commands.Remove:
 					self.remove(command)
-				elif command.name in Commands.Commands[Commands.RemoveNext]:
+				elif command.name in Commands.RemoveNext:
 					self.removeNext()
-				elif command.name in Commands.Commands[Commands.RemoveCurrent]:
+				elif command.name in Commands.RemoveCurrent:
 					self.removeCurrent()
-				elif command.name in Commands.Commands[Commands.Pause]:
+				elif command.name in Commands.Pause:
 					self.pause()
-				elif command.name in Commands.Commands[Commands.Previous]:
+				elif command.name in Commands.Previous:
 					self.previous()
-				elif command.name in Commands.Commands[Commands.Next]:
+				elif command.name in Commands.Next:
 					self.next()
-				elif command.name in Commands.Commands[Commands.Stop]:
+				elif command.name in Commands.Stop:
 					self.stop()
-				elif command.name in Commands.Commands[Commands.Clear]:
+				elif command.name in Commands.Clear:
 					self.clear()
-				elif command.name in Commands.Commands[Commands.Shuffle]:
+				elif command.name in Commands.Shuffle:
 					self.shuffle()
-				elif command.name in Commands.Commands[Commands.Repeat]:
+				elif command.name in Commands.Repeat:
 					self.repeat(command)
-				elif command.name in Commands.Commands[Commands.List]:
+				elif command.name in Commands.List:
 					self.list()
-				elif command.name in Commands.Commands[Commands.Position]:
+				elif command.name in Commands.Position:
 					self.position(command)				
-				elif command.name in Commands.Commands[Commands.Speed]:
+				elif command.name in Commands.Speed:
 					self.speed(command)
-				elif command.name in Commands.Commands[Commands.Volume]:
+				elif command.name in Commands.Volume:
 					self.volume(command)
-				elif command.name in Commands.Commands[Commands.Playlist]:
+				elif command.name in Commands.Playlist:
 					self.playlist(command)
 				else:
 					self.report("the command: " + command.name + " wasn't found")
@@ -463,9 +463,9 @@ class CLI(TS3MusicBotModule):
 
 	def repeat(self, command):
 		if len(command.args) > 0:
-			if command.args[0].name in ArgValues.ArgValues[ArgValues.All]:
+			if command.args[0].name in ArgValues.All:
 				bot.repeat(2)
-			elif command.args[0].name in ArgValues.ArgValues[ArgValues.Stop]:
+			elif command.args[0].name in ArgValues.Stop:
 				bot.repeat(0)
 			else:
 				self.report("argument " + command.args[0].name + " not found")
@@ -541,23 +541,23 @@ class CLI(TS3MusicBotModule):
 
 	def playlist(self, command):
 		if len(command.args) > 0:
-			if command.args[0].name in Args.Args[Args.Create]:
+			if command.args[0].name in Args.Create:
 				self.playlistCreate(command.args)
-			elif command.args[0].name in Args.Args[Args.Delete]:
+			elif command.args[0].name in Args.Delete:
 				self.playlistDelete(command.args)
-			elif command.args[0].name in Args.Args[Args.Add]:
+			elif command.args[0].name in Args.Add:
 				self.playlistAdd(command.args)
-			elif command.args[0].name in Args.Args[Args.Remove]:
+			elif command.args[0].name in Args.Remove:
 				self.playlistRemove(command.args)
-			elif command.args[0].name in Args.Args[Args.Play]:
+			elif command.args[0].name in Args.Play:
 				self.playlistPlay(command.args)
-			elif command.args[0].name in Args.Args[Args.Queue]:
+			elif command.args[0].name in Args.Queue:
 				self.playlistQueue(command.args)
-			elif command.args[0].name in Args.Args[Args.Shuffle]:
+			elif command.args[0].name in Args.Shuffle:
 				self.playlistShuffle(command.args)
-			elif command.args[0].name in Args.Args[Args.Clear]:
+			elif command.args[0].name in Args.Clear:
 				self.playlistClear(command.args)
-			elif command.args[0].name in Args.Args[Args.List]:
+			elif command.args[0].name in Args.List:
 				self.playlistList(command.args)
 			else:
 				self.report("argument " + command.args[0].name + " not found")
@@ -567,8 +567,8 @@ class CLI(TS3MusicBotModule):
 	def playlistCreate(self, args):
 		name = args[0].value
 		if len(args) > 1:
-			if args[1].name in Args.Args[Args.From]:
-				if args[1].value in ArgValues.ArgValues[ArgValues.Queue]:
+			if args[1].name in Args.From:
+				if args[1].value in ArgValues.Queue:
 					bot.playlistCreateFromQueue(name)
 				else:
 					p = bot.getPlaylist(args[1].value)
@@ -590,7 +590,7 @@ class CLI(TS3MusicBotModule):
 
 	def playlistAdd(self, args):
 		if len(args) > 1:
-			if args[1].name in Args.Args[Args.To]:			
+			if args[1].name in Args.To:			
 				p = bot.getPlaylist(args[1].value)
 				if not p == None:					
 					if self.isURL(args[0].value):
@@ -612,7 +612,7 @@ class CLI(TS3MusicBotModule):
 
 	def playlistRemove(self, args):
 		if len(args) > 1:
-			if args[1].name in Args.Args[Args.From]:
+			if args[1].name in Args.From:
 				p = bot.getPlaylist(args[1].value)
 				if not p == None:
 					integer = True
@@ -661,7 +661,7 @@ class CLI(TS3MusicBotModule):
 			self.report("playlist not found")
 
 	def playlistList(self, args):
-		if args[0].value in ArgValues.ArgValues[ArgValues.All]:
+		if args[0].value in ArgValues.All:
 			self.playlistListAll()
 		else:
 			p = bot.getPlaylist(args[0].value)

@@ -531,10 +531,11 @@ def playlistCreateFrom(name, playlist):
 		report("created " + name + " from " + playlist.name)
 
 def isForbidden(name):
-	for n in ForbiddenNames.fields:
-		if name == n:
-			report("name is forbidden")
-			return True
+	for f in ForbiddenNames.fields:
+		for n in f:
+			if name == n:
+				report("name is forbidden")
+				return True
 	for p in playlists:
 		if name == p.name:
 			report("name already exists")
