@@ -122,10 +122,16 @@ class CLI(TS3MusicBotModule):
 	#commands
 	#
 
-	def handleCommand(self, command, prefix=""):
+	def handleCommand(self, command, prefix=("",)):
 		if not command == None:
-			if command.name.startswith(prefix):
-				command.name = command.name[len(prefix):]
+			startswithprefix = None
+			for p in prefix:
+				if command.name.startswith(p):
+					startswithprefix = p
+					break
+
+			if not startswithprefix == None:
+				command.name = command.name[len(startswithprefix):]
 				if command.name in Commands.Play:
 					self.play(command)
 				elif command.name in Commands.PlayNext:

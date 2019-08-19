@@ -10,7 +10,7 @@ class JSONFields:
 	RepeatSong 	= "repeatSong"
 
 class Prefixes:
-	Teamspeak 	= ":"
+	Teamspeak 	= ("!", ":")
 
 class Commands:
 	Play         	= ("play", "pl")

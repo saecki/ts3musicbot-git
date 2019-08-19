@@ -32,7 +32,7 @@ An example command written on teamspeak could look like this:
 ### Prefixes
 | Plattform                                          | Prefix |
 | ---                                                | --- |
-| Teamspeak                                          | : |
+| Teamspeak                                          | ! or : |
 | Terminal                                           | ```None``` |
 
 ### Commands
