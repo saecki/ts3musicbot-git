@@ -332,7 +332,7 @@ def minusSpeed(speed):
 def setVolume(volume):
 	try:
 		for i in range(0, 5):
-			if player.audio_set_volume(getNumberBetween(volume, 0, 120)) == 0:
+			if player.audio_set_volume(getNumberBetween(volume, 0, 130)) == 0:
 				time.sleep(0.1)
 				report("set volume to " + str(player.audio_get_volume()))
 				return

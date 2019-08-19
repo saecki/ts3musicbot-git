@@ -8,9 +8,10 @@ A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
   - [Syntax](#syntax)
   - [Prefixes](#prefixes)
   - [Commands](#commands)
-    - [Examples](#examples)
-      - [Teamspeak](#teamspeak)
-      - [Terminal](#terminal)
+  - [Short Forms](#short-forms)
+  - [Examples](#examples)
+    - [Teamspeak](#teamspeak)
+    - [Terminal](#terminal)
 - [Dependencies](#dependencies)
 - [Setup](#setup)
 
@@ -80,6 +81,48 @@ An example command written on teamspeak could look like this:
 | listing all playlists                              | ```Prefix```playlist list: all |
 | listing a playlist                                 | ```Prefix```playlist list: ```name``` |
 
+### Short Forms
+| Command       | Short Form |
+| ---           | --- |
+| play          | pl |
+| playnext      | pnx |
+| playnow       | pnw |
+| playqueue     | pq |
+| remove        | rm |
+| removenext    | rn |
+| removecurrent | rc |
+| pause         | pa |
+| next          | nx |
+| prev          | pr |
+| stop          | st |
+| clear         | cl |
+| shuffle       | sh |
+| repeat        | rp |
+| list          | ls |
+| position      | ps |
+| speed         | sp |
+| volume        | vl |
+| playlist      | pll |
+
+| Argument | Short Form |
+| ---      | --- |
+| create:  | cr: |
+| delete:  | dl: |
+| add:     | ad: |
+| remove:  | rm: |
+| play:    | pl: |
+| queue:   | qu: |
+| shuffle: | sh: |
+| clear:   | cl: |
+| list:    | ls: |
+| from:    | fr: |
+
+| Argument Values | Short Form |
+| ---             | --- |
+| all             | a |
+| stop            | s |
+| queue           | q |
+
 ### Examples
 
 #### Teamspeak
@@ -138,3 +181,4 @@ An example command written on teamspeak could look like this:
 - Download and install Python, TeamSpeak, VC media player and VB-CABLE
 - Navigate into the ts3musicbot-git/ts3musicbot directory that you've downloaded and install all python dependencies by executing the command: ```pip3 install -r requirements.txt```.
 - Install the ClientQuery plugin in TeamSpeak directly by going to: Tools - Options - Addons - Browse online and then searching ClientQuery and installing it
+#TODO
