@@ -49,6 +49,7 @@ An example command written on teamspeak could look like this:
 | removing the next song                             | ```Prefix```removenext |
 | removing the current song                          | ```Prefix```removecurrent |
 | pausing the song                                   | ```Prefix```pause |
+| toggling the playback state                        | ```Prefix```toggle |
 | playing the next song                              | ```Prefix```next |
 | playing the previous song                          | ```Prefix```prev |
 | stopping the song                                  | ```Prefix```stop |
@@ -92,6 +93,7 @@ An example command written on teamspeak could look like this:
 | removenext    | rn |
 | removecurrent | rc |
 | pause         | pa |
+| toggle        | tg |
 | next          | nx |
 | prev          | pr |
 | stop          | st |
@@ -178,7 +180,7 @@ An example command written on teamspeak could look like this:
 
 ## Setup
 - Clone or download ts3musicbot-git
-- Download and install Python, TeamSpeak, VC media player and VB-CABLE
+- Download and install Python, TeamSpeak, VLC media player and VB-CABLE
 - Navigate into the ts3musicbot-git/ts3musicbot directory that you've downloaded and install all python dependencies by executing the command: ```pip3 install -r requirements.txt```.
 - Install the ClientQuery plugin in TeamSpeak directly by going to: Tools - Options - Addons - Browse online and then searching ClientQuery and installing it
 #TODO

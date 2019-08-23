@@ -4,7 +4,76 @@ import ts3
 
 import ts3musicbot as bot
 
+from modules import cli
 from common.classproperties import FileSystem
+from common.constants import Prefixes
+
+clientQuery = None
+disconnected = False
+
+def run():
+	global clientQuery
+
+	clientQuery = ClientQuery()
+	nicknameIndex = 0
+
+	if not disconnected:
+		bot.addThread(target=startKeepingAliveQueryConnection, daemon=True)
+		bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+
+def update():
+	if not disconnected:
+		updateDescription()
+
+def report(string):
+	if not disconnected:
+		sendToChannel(string)
+
+def startKeepingAliveQueryConnection():
+	while bot.running:
+		with bot.clientQueryLock:
+			clientQuery.sendKeepalive()
+		time.sleep(200)
+
+def startCheckingForTeamspeakCommand():
+	clientQuery.registerForTextEvents()
+
+	while bot.running:
+		string = clientQuery.listenForTextEvents()
+		if string != None:
+			command = cli.stringToCommand(string)
+			with bot.lock:
+				cli.handleCommand(command, prefix=Prefixes.Teamspeak)
+
+def sendToChannel(string):
+	with bot.clientQueryLock:
+		clientQuery.sendMessageToCurrentChannel(string)
+
+def updateNickname():
+	msg = cli.getCurrentSongTitle()
+
+	if msg != None:
+		if nicknameIndex > len(msg) - 5:
+			nicknameIndex = 0
+		
+		msg = msg[nicknameIndex:]
+
+		nickname = msg[:30] if len(msg) > 30 else msg
+
+		nicknameIndex += 1
+	
+	else:
+		nickname = clientQuery.NICKNAME
+
+	with bot.clientQueryLock:
+		clientQuery.setNickname(nickname)
+
+
+def updateDescription():
+	msg = cli.getPlaybackInfo()
+	
+	with bot.clientQueryLock:
+		clientQuery.setDescription(msg)
 
 class ClientQuery:
 
@@ -18,9 +87,9 @@ class ClientQuery:
 		self.receivingConnection = self.connectAndAuthenticate(self.HOST, self.APIKEY)
 
 		if self.sendingConnection == None or self.receivingConnection == None:
+			disconnected = True
 			print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
-			print("running in terminal only mode")
-			bot.terminalOnly = True
+			print("running without teamspeak interface")
 		else:
 			self.updateBot()
 
@@ -50,11 +119,11 @@ class ClientQuery:
 					data["APIKEY"] = "YOURAPIKEY"
 					data["NICKNAME"] = "MUSICBOT"
 
-					json.dump(data, jsonfile)
+					json.dump(data, jsonfile, indent=4)
 
 					print("created a config.json file in ts3musicbot/data you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
 			except FileExistsError:	
-				print("couldn't create ts3clientquery config file")
+				print("couldn't create config file")
 		return False
 
 	def connectAndAuthenticate(self, HOST, APIKEY):
@@ -74,7 +143,7 @@ class ClientQuery:
 			clientvariables = self.sendingConnection.clientvariable(clientid, "client_nickname")
 			clientnickname = clientvariables[0]["client_nickname"]
 
-			if not self.NICKNAME == clientnickname:
+			if self.NICKNAME != clientnickname:
 				self.setNickname(self.NICKNAME)
 		except:
 			print("couldn't update nickname")
@@ -123,7 +192,7 @@ class ClientQuery:
 
 		time.sleep(0.01)
 
-		if not channelID == None:
+		if channelID != None:
 			try:
 				self.sendingConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
 			except:
@@ -141,7 +210,7 @@ class ClientQuery:
 	def setDescription(self, description):
 		cldbid = self.getDatabaseClientID()
 
-		if not cldbid == None:
+		if cldbid != None:
 			self.sendingConnection.clientdbedit(cldbid=cldbid, client_description=description)
 		else:
 			print("couldn't update description")
@@ -157,7 +226,7 @@ class ClientQuery:
 		try:
 			event = self.receivingConnection.wait_for_event(timeout=timeout)
 			clid = self.getClientID(self.receivingConnection)
-			if not event[0]["invokerid"] == clid:
+			if event[0]["invokerid"] != clid:
 				print(event[0]["msg"])
 				return event[0]["msg"]
 		except:

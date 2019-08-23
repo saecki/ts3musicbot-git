@@ -1,8 +1,5 @@
 import os
 
-from abc import ABC
-from abc import abstractmethod
-
 class FileSystem:
 
 	def getConfigFolderPath():
@@ -27,19 +24,6 @@ class FileSystem:
 		path += "config.json"
 
 		return path
-
-class TS3MusicBotModule:
-
-	def __init__(ABC):
-		pass
-
-	@abstractmethod
-	def update(self):
-		pass
-
-	@abstractmethod
-	async def report(self, string):
-		pass
 
 class Command:
 

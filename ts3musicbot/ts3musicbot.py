@@ -2,7 +2,6 @@ import json
 import os
 import pafy
 import random
-import telnetlib
 import threading
 import time
 import vlc
@@ -10,13 +9,11 @@ import vlc
 from common.classproperties import FileSystem
 from common.classproperties import Playlist
 from common.classproperties import Song
-from common.classproperties import TS3MusicBotModule
-
 from common.constants import ForbiddenNames
 from common.constants import JSONFields
 from common.constants import Modules
-
-from modules.cli import CLI
+from modules import cli
+from modules import teamspeak
 
 Instance = None
 player = None
@@ -34,9 +31,7 @@ clientQueryLock = None
 
 running = True
 
-terminalOnly = False
-
-def run(args=Modules.CLI):
+def run(args= Modules.Teamspeak + Modules.CLI):
 	global loop
 	global lock
 	global clientQueryLock
@@ -53,15 +48,18 @@ def run(args=Modules.CLI):
 	mainThread = addThread(target=mainLoop)
 	addThread(target=frequentlyWriteData, daemon=True)
 
-	if Modules.TerminalOnly in args:
-		print("running in terminal only mode")
-		terminalOnly = True
-
+	if Modules.Teamspeak in args:
+		modules.append(teamspeak)
 
 	if Modules.CLI in args:
-		modules.append(CLI())
+		modules.append(cli)
+
+	for m in modules:
+		m.run()
 
 	startThreads()
+
+	report("ready")
 
 	mainThread.join()
 
@@ -75,20 +73,20 @@ def quit():
 
 def startNewThread(target=None, args=None, daemon=False):
 	t = createThread(target=target, args=args, daemon=daemon)
-	if not t == None:
+	if t != None:
 		t.start()
 
 	return t
 
 def addThread(target=None, args=None, daemon=False):
 	t = createThread(target=target, args=args, daemon=daemon)
-	if not t == None:
+	if t != None:
 		threads.append(t)
 
 	return t
 
 def createThread(target=None, args=None, daemon=False):
-	if not target == None:
+	if target != None:
 		t = None
 		if args == None:
 			t = threading.Thread(target=target)
@@ -115,7 +113,7 @@ def mainLoop():
 		if player.get_state() == vlc.State.Ended:
 			if repeatSong == 0:
 				next()
-			if repeatSong == 1:
+			elif repeatSong == 1:
 				playSong()
 			elif repeatSong == 2:
 				if index >= len(songQueue) - 1:
@@ -136,7 +134,7 @@ def report(string):
 		m.report(string)
 
 #
-#maths stuff
+#convenient
 #
 
 def getNumberBetween(number, min, max):
@@ -167,7 +165,7 @@ def writeData():
 
 	try:
 		with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
-			json.dump(data, jsonfile)
+			json.dump(data, jsonfile, indent=4)
 	except:
 		report("couldn't write data")
 
@@ -193,7 +191,7 @@ def readData():
 			
 			try:
 				index = data[JSONFields.Index]
-				if not index < len(songQueue):
+				if index >= len(songQueue):
 					index = len(songQueue - 1)
 			except:
 				report("couldn't read index")
@@ -212,6 +210,16 @@ def readData():
 		except FileExistsError:	
 			report("config folder existed")
 	return False
+
+#
+#getters
+#
+
+def getCurrentSong():
+	if isPlayingOrPaused() and index < len(songQueue):
+		return songQueue[index]
+	else:
+		return None
 
 #
 #url
@@ -265,30 +273,6 @@ def isPlayingOrPaused():
 		return True
 	return False
 
-def getPlaybackInfo():
-	msg = ""
-
-	if len(songQueue) > 0:
-		msg = songQueue[index].title
-		
-		if player.get_state() == vlc.State.Playing:
-			msg = "playing: " + msg
-		elif player.get_state() == vlc.State.Paused:
-			msg = "paused: " + msg
-		else:
-			msg = ""
-
-		if player.is_seekable():
-				msg += " | " + str(round(player.get_position() * 100)) + "%"
-
-	return msg
-
-def getCurrentSongTitle():
-	if isPlayingOrPaused():
-		return songQueue[index].title
-	else:
-		return None
-		
 def setPosition(position):
 	position = getNumberBetween(position, 0, 100)
 	position = position / 100
@@ -297,7 +281,7 @@ def setPosition(position):
 		for i in range(0, 5):
 			if player.set_position(position) == None: #Should be checking for 0 but this library is shit and returns None
 				time.sleep(0.1)
-				report("set position to " + str(round(player.get_position() * 100)))
+				report("set position to " + str(round(player.get_position() * 100)) + "%")
 				return
 	except:
 		pass
@@ -317,7 +301,7 @@ def setSpeed(speed):
 		for i in range(0, 5):
 			if player.set_rate(rate) == 0:
 				time.sleep(0.1)
-				report("set speed to " + str(round(player.get_rate() * 100)))
+				report("set speed to " + str(round(player.get_rate() * 100)) + "%")
 				return
 	except:
 		pass
@@ -354,7 +338,7 @@ def play(song=None):
 		if player.get_state() == vlc.State.Paused:
 			player.play()
 			report("resumed")
-		elif not player.get_state() == vlc.State.Playing:
+		elif player.get_state() != vlc.State.Playing:
 			playSong()
 		else:
 			report("already playing")
@@ -419,7 +403,7 @@ def removeCurrent():
 
 		del songQueue[index]
 		report("removed current song " + title + " from the queue")
-		if index >= len(songQueue) and not index == 0:
+		if index >= len(songQueue) and index != 0:
 			index = len(songQueue) - 1
 			if isPlayingOrPaused():
 				stop()
@@ -429,8 +413,19 @@ def removeCurrent():
 		report("no songs to remove")
 
 def pause():
-	player.pause()
-	report("paused")
+	if not player.get_state() == vlc.State.Paused:
+		player.pause()
+		report("paused")
+	else:
+		report("already paused")
+
+def toggle():
+	if player.get_state() == vlc.State.Playing:
+		player.pause()
+		report("paused")
+	else:
+		player.play()
+		report("resumed")
 
 def previous():
 	global index
@@ -569,7 +564,7 @@ def playlistQueue(playlist):
 
 	songQueue = songQueue + playlist.songs
 	report("added songs from " + playlist.name + " to the queue")
-	if not (player.get_state() == vlc.State.Playing or player.get_state() == vlc.State.Paused):
+	if (player.get_state() != vlc.State.Playing or player.get_state() == vlc.State.Paused):
 		playSong()
 
 def playlistShuffle(playlist):
