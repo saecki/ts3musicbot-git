@@ -149,7 +149,6 @@ def getNumberFromString(string):
 	try:
 		num = float(string)
 	except:
-		bot.report("not a number")
 		return None
 	return num
 
@@ -494,22 +493,22 @@ def volume(command):
 	if len(command.args) > 0:
 		if command.args[0].name.startswith("+"):
 			string = command.args[0].name[1:]
-			volume = int(getNumberFromString(string))
+			volume = getNumberFromString(string)
 			
 			if volume != None:
-				bot.plusVolume(volume)
+				bot.plusVolume(int(volume))
 
 		elif command.args[0].name.startswith("-"):
 			string = command.args[0].name[1:]
-			volume = int(getNumberFromString(string))
+			volume = getNumberFromString(string)
 			
 			if volume != None:
-				bot.minusVolume(volume)
+				bot.minusVolume(int(volume))
 
 		else:
-			volume = int(getNumberFromString(command.args[0].name))
+			volume = getNumberFromString(command.args[0].name)
 			if volume != None:
-				bot.setVolume(volume)
+				bot.setVolume(int(volume))
 
 def lyrics(command):
 	bot.report("search them yourself faggot")

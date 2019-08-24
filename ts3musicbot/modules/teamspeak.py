@@ -76,6 +76,9 @@ def updateDescription():
 	with bot.clientQueryLock:
 		clientQuery.setDescription(msg)
 
+def comeOver(cid):
+
+
 class ClientQuery:
 
 	def __init__(self):
