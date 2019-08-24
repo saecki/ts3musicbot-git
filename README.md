@@ -38,49 +38,51 @@ An example command written on teamspeak could look like this:
 ### Commands
 \* songs can be youtube urls or just text which will be used to search a song on youtube   
 
-| Function                                           | Command |
-| ---                                                | --- |
-| adding a song to the queue                         | ```Prefix```play ```song*``` |
-| playing a song right after the current song        | ```Prefix```playnext ```song*``` |
-| playing a song right now                           | ```Prefix```playnow ```song*``` |
-| playing a song at a certain index in the queue     | ```Prefix```playqueue ```index``` |
-| resuming the song                                  | ```Prefix```play |
-| removing the song at a certain index               | ```Prefix```remove ```index``` |
-| removing the next song                             | ```Prefix```removenext |
-| removing the current song                          | ```Prefix```removecurrent |
-| pausing the song                                   | ```Prefix```pause |
-| toggling the playback state                        | ```Prefix```toggle |
-| playing the next song                              | ```Prefix```next |
-| playing the previous song                          | ```Prefix```prev |
-| stopping the song                                  | ```Prefix```stop |
-| clearing the queue                                 | ```Prefix```clear |
-| repeating one song                                 | ```Prefix```repeat |
-| repeating all songs                                | ```Prefix```repeat all |
-| stop repeating                                     | ```Prefix```repeat stop |
-| shuffling the queue                                | ```Prefix```shuffle |
-| listing the queue                                  | ```Prefix```list |
-| setting the playback position in percent           | ```Prefix```position ```value```|
-| adding a value to the position                     | ```Prefix```position ```+value```|
-| subtracting a value from the position              | ```Prefix```position ```-value```|
-| setting the playback speed in percent              | ```Prefix```speed ```value```|
-| adding a value to the speed                        | ```Prefix```speed ```+value```|
-| subtracting a value from the speed                 | ```Prefix```speed ```-value```|
-| setting the volume to a value between 0 to 120     | ```Prefix```volume ```value```|
-| adding a value to the volume                       | ```Prefix```volume ```+value```|
-| subtracting a value from the volume                | ```Prefix```volume ```-value```|
-|                                                    |
-| creating a playlist                                | ```Prefix```playlist create: ```name``` |
-| creating a playlist from the queue                 | ```Prefix```playlist create: ```name``` from: queue |
-| creating a playlist from another playlist          | ```Prefix```playlist create: ```name``` from: ```otherplaylist``` |
-| deleteting a playlist                              | ```Prefix```playlist delete: ```name``` |
-| adding a song to a playlist                        | ```Prefix```playlist add: ```url``` to: ```name``` |
-| removing a song at a certain index from a playlist | ```Prefix```playlist remove: ```index``` from: ```name``` |
-| adding the playlist to the queue                   | ```Prefix```playlist queue: ```name``` |
-| replacing the queue with a playlist                | ```Prefix```playlist queue: ```name``` replace |
-| shuffling a playlist                               | ```Prefix```playlist shuffle: ```name``` |
-| clearing a playlist                                | ```Prefix```playlist clear: ```name``` |
-| listing all playlists                              | ```Prefix```playlist list: all |
-| listing a playlist                                 | ```Prefix```playlist list: ```name``` |
+| Function                                                    | Command |
+| ---                                                         | --- |
+| adding a song to the queue                                  | ```Prefix```play ```song*``` |
+| playing a song right after the current song                 | ```Prefix```playnext ```song*``` |
+| playing a song right now                                    | ```Prefix```playnow ```song*``` |
+| playing a song at a certain index in the queue              | ```Prefix```playqueue ```index``` |
+| resuming the song                                           | ```Prefix```play |
+| removing the song at a certain index                        | ```Prefix```remove ```index``` |
+| removing the next song                                      | ```Prefix```removenext |
+| removing the current song                                   | ```Prefix```removecurrent |
+| pausing the song                                            | ```Prefix```pause |
+| toggling the playback state                                 | ```Prefix```toggle |
+| playing the next song                                       | ```Prefix```next |
+| playing the previous song                                   | ```Prefix```prev |
+| stopping the song                                           | ```Prefix```stop |
+| clearing the queue                                          | ```Prefix```clear |
+| repeating one song                                          | ```Prefix```repeat |
+| repeating all songs                                         | ```Prefix```repeat all |
+| stop repeating                                              | ```Prefix```repeat stop |
+| shuffling the queue                                         | ```Prefix```shuffle |
+| listing the queue                                           | ```Prefix```list |
+| setting the playback position in percent                    | ```Prefix```position ```value```|
+| adding a value to the position                              | ```Prefix```position ```+value```|
+| subtracting a value from the position                       | ```Prefix```position ```-value```|
+| setting the playback speed in percent                       | ```Prefix```speed ```value```|
+| adding a value to the speed                                 | ```Prefix```speed ```+value```|
+| subtracting a value from the speed                          | ```Prefix```speed ```-value```|
+| setting the volume to a value between 0 to 120              | ```Prefix```volume ```value```|
+| adding a value to the volume                                | ```Prefix```volume ```+value```|
+| subtracting a value from the volume                         | ```Prefix```volume ```-value```|
+|                                                             |
+| creating a playlist                                         | ```Prefix```playlist create: ```name``` |
+| creating a playlist from the queue                          | ```Prefix```playlist create: ```name``` from: queue |
+| creating a playlist from another playlist                   | ```Prefix```playlist create: ```name``` from: ```otherplaylist``` |
+| deleteting a playlist                                       | ```Prefix```playlist delete: ```name``` |
+| adding a song to a playlist                                 | ```Prefix```playlist add: ```song*``` to: ```name``` |
+| adding a song at a certain index of the queue to a playlist | ```Prefix```playlist add: ```index``` to: ```name``` |
+| adding the current song to a playlist                       | ```Prefix```playlist add: currentsong to: ```name``` |
+| removing a song at a certain index from a playlist          | ```Prefix```playlist remove: ```index``` from: ```name``` |
+| adding the playlist to the queue                            | ```Prefix```playlist queue: ```name``` |
+| replacing the queue with a playlist                         | ```Prefix```playlist queue: ```name``` replace |
+| shuffling a playlist                                        | ```Prefix```playlist shuffle: ```name``` |
+| clearing a playlist                                         | ```Prefix```playlist clear: ```name``` |
+| listing all playlists                                       | ```Prefix```playlist list: all |
+| listing a playlist                                          | ```Prefix```playlist list: ```name``` |
 
 ### Short Forms
 | Command       | Short Form |
@@ -124,7 +126,7 @@ An example command written on teamspeak could look like this:
 | all             | a |
 | stop            | s |
 | queue           | q |
-
+| currentsong     | cs |
 ### Examples
 
 #### Teamspeak
@@ -183,4 +185,5 @@ An example command written on teamspeak could look like this:
 - Download and install Python, TeamSpeak, VLC media player and VB-CABLE
 - Navigate into the ts3musicbot-git/ts3musicbot directory that you've downloaded and install all python dependencies by executing the command: ```pip3 install -r requirements.txt```.
 - Install the ClientQuery plugin in TeamSpeak directly by going to: Tools - Options - Addons - Browse online and then searching ClientQuery and installing it
-#TODO
+- start the bot once by executing the main.py file in the ts3musicbot dir which will create the data folder inside it with a config file and then close it.
+- Open the config.json file and fill in the apikey which can be found in your teamspeak client at: tools - options - addons - clientquery - settings optionally change the nickname of the bot.

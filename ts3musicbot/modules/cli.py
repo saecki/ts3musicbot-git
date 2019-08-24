@@ -86,7 +86,7 @@ def handleCommand(command, prefix=("",)):
 			elif command.name in Commands.Repeat:
 				repeat(command)
 			elif command.name in Commands.List:
-				list()
+				list(command)
 			elif command.name in Commands.Position:
 				position(command)				
 			elif command.name in Commands.Speed:
@@ -176,10 +176,16 @@ def isYoutubeURL(url):
 	else:
 		return False
 
-def getCommandArgsAsString(args, start=0, end=None, till=None):
-	msg = ""
-
+def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=None):
 	length = len(args)
+
+	if startWithArgVal:
+		if start < length:
+			msg = args[start].value
+		start += 1
+	else:
+		msg = ""
+
 
 	if end == None:
 		end = length
@@ -187,14 +193,14 @@ def getCommandArgsAsString(args, start=0, end=None, till=None):
 	if length > start and length >= end:
 		for i in range(start, end):
 			n = args[i].name
-			if n == till:
+			if n in till:
 				break
 			else:
 				msg += n + " "
 
 			v = args[i].value
 			if v != None:
-				if v == till:
+				if v in till:
 					break
 				else:
 					msg += v + " " 
@@ -244,21 +250,21 @@ def getYoutubeSongFromPlayCommand(command):
 	
 	return None
 
-def getYoutubeSongFromPlaylistCommand(command):
-	if isURL(command.args[0].value):
-		url = getURL(command.args[0].value)
+def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
+	if isURL(args[0].value):
+		url = getURL(args[0].value)
 		if isYoutubeURL(url):
 			title = getTitleFromYoutubeURL(url)
 			song = Song(url, title=title)
 			return song
 		else:
 			bot.report(url + " is no valid youtube url")
-	else:
-		string = command.args[0].value + " "
-		newArgs = command.args[1:]
-
-		for arg in newArgs:
-			string += arg.name + " "
+	elif args[0].value in ArgValues.CurrentSong:
+		return bot.getCurrentSong()
+	elif getNumberFromString(args[0].value) != None:
+		return bot.getSong(int(getNumberFromString(args[0].value)))
+	elif tillArg in [a.name for a in args]:
+		string = getCommandArgsAsString(args, startWithArgVal=True, till=tillArg)
 
 		song = getYoutubeSongFromString(string)
 		
@@ -414,7 +420,7 @@ def clear():
 def shuffle():
 	bot.shuffle()
 
-def list():
+def list(command):
 	index = 0
 
 	msg = "queue:\n"
@@ -427,6 +433,9 @@ def list():
 		
 		index += 1
 	bot.report(msg)
+
+	if len(command.args) > 0 and command.args[0].name in ArgValues.All:
+		playlistListAll()
 
 def repeat(command):
 	if len(command.args) > 0:
@@ -550,7 +559,7 @@ def playlistCreate(args):
 				else:
 					bot.report("couldn't find playlist")
 		else:
-			bot.report("specified argument not correct")
+			bot.report("specified arguments not correct or missing")
 	else:
 		bot.playlistCreate(name)
 
@@ -563,23 +572,22 @@ def playlistDelete(args):
 
 def playlistAdd(args):
 	if len(args) > 1:
-		if args[1].name in Args.To:			
-			p = bot.getPlaylist(args[1].value)
-			if p != None:					
-				if isURL(args[0].value):
-					url = getURL(args[0].value)
-					if isYoutubeURL(url):
-						title = getTitleFromYoutubeURL(url)
-						song = Song(url, title=title)
-						bot.playlistAdd(song, p)
-					else:
-						bot.report("specified value is no youtube url")
-				else:
-					bot.report("specified value is no url")
+		toArg = None
+		for a in args:
+			if a.name in Args.To:
+				toArg = a
+				break
+
+		if toArg != None and toArg.value != None:
+			p = bot.getPlaylist(toArg.value)
+			if p != None:
+				song = getYoutubeSongFromPlaylistCommand(args, tillArg=Args.To)
+				if song != None:
+					bot.playlistAdd(song, p)
 			else:
 				bot.report("playlist not found")
 		else:
-			bot.report("specified argument not correct")
+			bot.report("specified arguments not correct or missing")
 	else:
 		bot.report("not enough Args")
 
@@ -601,7 +609,7 @@ def playlistRemove(args):
 			else:
 				bot.report("playlist not found")
 		else:
-			bot.report("specified argument not correct")
+			bot.report("specified arguments not correct or missing")
 	else:
 		bot.report("not enough Args")
 

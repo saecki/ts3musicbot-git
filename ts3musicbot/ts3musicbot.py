@@ -215,6 +215,15 @@ def readData():
 #getters
 #
 
+def getSong(index):
+	length = len(songQueue)
+	if length > 0:
+		i = getNumberBetween(index, 0, length - 1)
+		return songQueue[i]
+
+	return None
+
+
 def getCurrentSong():
 	if isPlayingOrPaused() and index < len(songQueue):
 		return songQueue[index]
@@ -542,13 +551,14 @@ def playlistDelete(playlist):
 	report("deleted " + playlist.name)
 
 def playlistAdd(song, playlist):
-	playlist.addSong(songURL)
-	report("added " + song.title + "to " + playlist.name)
+	playlist.addSong(song)
+	report("added " + song.title + " to " + playlist.name)
 
 def playlistRemove(index, playlist):
 	index = getNumberBetween(index, 0, len(songQueue) - 1)
+	title = playlist.songs[index].title
 	del playlist.songs[index]
-	report("removed song at index " + str(index) + " from " + playlist.name)
+	report("removed song " + title + " at index " + str(index) + " from " + playlist.name)
 
 def playlistPlay(playlist):
 	global songQueue

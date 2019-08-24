@@ -4,6 +4,9 @@ class JSONFields:
 	Index 		= "index"
 	RepeatSong 	= "repeatSong"
 
+	ApiKey 		= "apikey"
+	Nickname 	= "nickname"
+
 class Modules:
 	CLI 			= "c"
 	WebInterface 	= "w"
@@ -53,9 +56,10 @@ class Args:
 	To 		= ("to:")
 
 class ArgValues:
-	All 	= ("all", 	"a")
-	Stop 	= ("stop", 	"s")
-	Queue 	= ("queue", "q")
+	All 	= 		("all", 		"a")
+	Stop 	= 		("stop", 		"s")
+	Queue 	= 		("queue", 		"q")
+	CurrentSong =	("currntsong", 	"cs")
 
 class ForbiddenNames:
 	fields = (

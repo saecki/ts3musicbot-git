@@ -4,9 +4,10 @@ import ts3
 
 import ts3musicbot as bot
 
-from modules import cli
 from common.classproperties import FileSystem
+from common.constants import JSONFields
 from common.constants import Prefixes
+from modules import cli
 
 clientQuery = None
 disconnected = False
@@ -78,13 +79,15 @@ def updateDescription():
 class ClientQuery:
 
 	def __init__(self):
+		global disconnected
+
 		self.APIKEY = ""
 		self.NICKNAME = ""
 		self.HOST = "localhost"
 
 		self.readData()
-		self.sendingConnection = self.connectAndAuthenticate(self.HOST, self.APIKEY)
-		self.receivingConnection = self.connectAndAuthenticate(self.HOST, self.APIKEY)
+		self.sendingConnection = self.createConnection(self.HOST, self.APIKEY)
+		self.receivingConnection = self.createConnection(self.HOST, self.APIKEY)
 
 		if self.sendingConnection == None or self.receivingConnection == None:
 			disconnected = True
@@ -100,12 +103,12 @@ class ClientQuery:
 				data = json.load(jsonfile)	
 				
 				try:
-					self.APIKEY = data["APIKEY"]
+					self.APIKEY = data[JSONFields.ApiKey]
 				except:
 					print("couldn't read apikey")
 
 				try:
-					self.NICKNAME = data["NICKNAME"]
+					self.NICKNAME = data[JSONFields.Nickname]
 				except:
 					print("couldn't read nickname")
 			
@@ -116,8 +119,8 @@ class ClientQuery:
 			try:
 				with open(FileSystem.getClientQueryFilePath(), "w") as jsonfile:
 					data = {}
-					data["APIKEY"] = "YOURAPIKEY"
-					data["NICKNAME"] = "MUSICBOT"
+					data[JSONFields.ApiKey] = "YOURAPIKEY"
+					data[JSONFields.Nickname] = "Musicbot"
 
 					json.dump(data, jsonfile, indent=4)
 
@@ -126,7 +129,7 @@ class ClientQuery:
 				print("couldn't create config file")
 		return False
 
-	def connectAndAuthenticate(self, HOST, APIKEY):
+	def createConnection(self, HOST, APIKEY):
 		try:
 			ts3conn = ts3.query.TS3ClientConnection(HOST)
 			ts3conn.auth(apikey=APIKEY)
