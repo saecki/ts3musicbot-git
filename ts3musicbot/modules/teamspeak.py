@@ -9,12 +9,18 @@ from common.constants import JSONFields
 from common.constants import Prefixes
 from modules import cli
 
+APIKEY = ""
+NICKNAME = ""
+SERVERADDRESS = ""
+HOST = "localhost"
+
 clientQuery = None
 disconnected = False
 
 def run():
 	global clientQuery
 
+	readData()
 	clientQuery = ClientQuery()
 	nicknameIndex = 0
 
@@ -29,6 +35,49 @@ def update():
 def report(string):
 	if not disconnected:
 		sendToChannel(string)
+
+def readData():
+	global APIKEY
+	global NICKNAME
+	global SERVERADDRESS
+
+	try:
+		with open(FileSystem.getClientQueryFilePath()) as jsonfile:  
+			data = json.load(jsonfile)	
+			
+			try:
+				APIKEY = data[JSONFields.ApiKey]
+			except:
+				print("couldn't read apikey")
+
+			try:
+				NICKNAME = data[JSONFields.Nickname]
+			except:
+				print("couldn't read nickname")
+
+			try:
+				SERVERADDRESS = data[JSONFields.ServerAddress]
+			except Exception as e:
+				print("couldn't read SERVERADDRESS")
+				print(e)
+
+		return True
+	except:
+		print("couldn't read config file")
+		print("trying to create a ts3clientquery config file")
+		try:
+			with open(FileSystem.getClientQueryFilePath(), "w") as jsonfile:
+				data = {}	
+				data[JSONFields.ApiKey] = "YOURAPIKEY"
+				data[JSONFields.Nickname] = "Musicbot"
+				data[JSONFields.ServerAddress] = ""
+
+				json.dump(data, jsonfile, indent=4)
+
+				print("created a config.json file in ts3musicbot/data you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
+		except FileExistsError:	
+			print("couldn't create config file")
+	return False
 
 def startKeepingAliveQueryConnection():
 	while bot.running:
@@ -76,81 +125,50 @@ def updateDescription():
 	with bot.clientQueryLock:
 		clientQuery.setDescription(msg)
 
-def comeOver(cid):
-
-
 class ClientQuery:
 
 	def __init__(self):
 		global disconnected
 
-		self.APIKEY = ""
-		self.NICKNAME = ""
-		self.HOST = "localhost"
+		self.mainConnection = self.createQuery(HOST, APIKEY)
+		self.listeningConnection = self.createQuery(HOST, APIKEY)
 
-		self.readData()
-		self.sendingConnection = self.createConnection(self.HOST, self.APIKEY)
-		self.receivingConnection = self.createConnection(self.HOST, self.APIKEY)
-
-		if self.sendingConnection == None or self.receivingConnection == None:
+		if self.mainConnection == None or self.listeningConnection == None:
 			disconnected = True
 			print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
 			print("running without teamspeak interface")
 		else:
 			self.updateBot()
+			#self.connect()
 
-	def readData(self):
-
-		try:
-			with open(FileSystem.getClientQueryFilePath()) as jsonfile:  
-				data = json.load(jsonfile)	
-				
-				try:
-					self.APIKEY = data[JSONFields.ApiKey]
-				except:
-					print("couldn't read apikey")
-
-				try:
-					self.NICKNAME = data[JSONFields.Nickname]
-				except:
-					print("couldn't read nickname")
-			
-			return True
-		except:
-			print("couldn't read config file")
-			print("trying to create a ts3clientquery config file")
-			try:
-				with open(FileSystem.getClientQueryFilePath(), "w") as jsonfile:
-					data = {}
-					data[JSONFields.ApiKey] = "YOURAPIKEY"
-					data[JSONFields.Nickname] = "Musicbot"
-
-					json.dump(data, jsonfile, indent=4)
-
-					print("created a config.json file in ts3musicbot/data you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
-			except FileExistsError:	
-				print("couldn't create config file")
-		return False
-
-	def createConnection(self, HOST, APIKEY):
+	def createQuery(self, HOST, APIKEY):
 		try:
 			ts3conn = ts3.query.TS3ClientConnection(HOST)
 			ts3conn.auth(apikey=APIKEY)
-			ts3conn.use()
+			ts3conn.use()	
 			return ts3conn
 		except:
 			print("couldn't connect to teamspeak")
 		return None
 
+	def connect(self):
+		if len(SERVERADDRESS) > 0:
+			try:
+				serverInfo = self.mainConnection.serverconnectinfo()
+				if serverInfo["ip"] != SERVERADDRESS:
+					self.mainConnection.connect(address=SERVERADDRESS) #TODO replace with correct function
+			except:
+				print("couldn't connect to " + SERVERADDRESS)
+
 	def updateBot(self):
 		try:
-			clientinfo = self.sendingConnection.whoami()
+			clientinfo = self.mainConnection.whoami()
 			clientid = clientinfo[0]["clid"]
-			clientvariables = self.sendingConnection.clientvariable(clientid, "client_nickname")
+			clientvariables = self.mainConnection.clientvariable(clientid, "client_nickname")
 			clientnickname = clientvariables[0]["client_nickname"]
 
-			if self.NICKNAME != clientnickname:
-				self.setNickname(self.NICKNAME)
+			if NICKNAME != clientnickname:
+				self.setNickname(NICKNAME)
 		except:
 			print("couldn't update nickname")
 
@@ -174,10 +192,15 @@ class ClientQuery:
 
 		return None
 
+	def connectToChannel(cid):
+		clid = getClientID()
+		if clid != None:
+			mainConnection.clientmove(cid=cid, clid=clid)
+
 	def getDatabaseClientID(self):
 		try:
-			clid = self.getClientID(self.sendingConnection)
-			clients = self.sendingConnection.clientlist()
+			clid = self.getClientID(self.mainConnection)
+			clients = self.mainConnection.clientlist()
 
 			for c in clients:
 				if c["clid"] == clid:
@@ -192,7 +215,7 @@ class ClientQuery:
 		time.sleep(0.01)
 
 		try:
-			channelID = self.getCurrentChannelID(self.sendingConnection)
+			channelID = self.getCurrentChannelID(self.mainConnection)
 		except:
 			print("couldn't get channel id")
 
@@ -200,7 +223,7 @@ class ClientQuery:
 
 		if channelID != None:
 			try:
-				self.sendingConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
+				self.mainConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
 			except:
 				print("couldn't send to channel")
 
@@ -208,7 +231,7 @@ class ClientQuery:
 
 	def setNickname(self, nickname):
 		try:
-			self.sendingConnection.clientupdate(client_nickname=nickname)
+			self.mainConnection.clientupdate(client_nickname=nickname)
 		except:
 			print("couldn't update nickname")
 
@@ -217,21 +240,21 @@ class ClientQuery:
 		cldbid = self.getDatabaseClientID()
 
 		if cldbid != None:
-			self.sendingConnection.clientdbedit(cldbid=cldbid, client_description=description)
+			self.mainConnection.clientdbedit(cldbid=cldbid, client_description=description)
 		else:
 			print("couldn't update description")
 
 	def registerForTextEvents(self):
 		try:
-			self.receivingConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
+			self.listeningConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
 		except:
 			print("couldn't register for text events from the teamspeak client")
 
 	def listenForTextEvents(self, timeout=60):
 
 		try:
-			event = self.receivingConnection.wait_for_event(timeout=timeout)
-			clid = self.getClientID(self.receivingConnection)
+			event = self.listeningConnection.wait_for_event(timeout=timeout)
+			clid = self.getClientID(self.listeningConnection)
 			if event[0]["invokerid"] != clid:
 				print(event[0]["msg"])
 				return event[0]["msg"]
@@ -242,6 +265,6 @@ class ClientQuery:
 
 	def sendKeepalive(self):
 		try:
-			self.receivingConnection.send_keepalive()
+			self.listeningConnection.send_keepalive()
 		except:
 			print("couldn't send keep alive to the teamspeak client")

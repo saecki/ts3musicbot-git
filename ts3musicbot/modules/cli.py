@@ -299,7 +299,8 @@ def getStatus():
 		msg += "title: " + getCurrentSongTitle() + "\n"
 		msg += "position: " +  getPosition() + "\n"
 	msg += "speed: " + getSpeed() + "\n"
-	msg += "volume : " + getVolume() + "\n"
+	msg += "volume: " + getVolume() + "\n"
+	msg += "repeat: " + getRepeat() + "\n"
 	msg += "index: " + str(bot.index) + "\n"
 	msg += "songQueue length: " + str(len(bot.songQueue)) + "\n"
 
@@ -337,6 +338,14 @@ def getSpeed():
 
 def getVolume():
 	return str(bot.player.audio_get_volume()) + "%"
+
+def getRepeat():
+	if bot.repeatSong == 0:
+		return "none"
+	elif bot.repeatSong == 1:
+		return "song"
+	else:
+		return "all"
 
 #
 #queue

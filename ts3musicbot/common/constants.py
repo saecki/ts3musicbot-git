@@ -4,8 +4,9 @@ class JSONFields:
 	Index 		= "index"
 	RepeatSong 	= "repeatSong"
 
-	ApiKey 		= "apikey"
-	Nickname 	= "nickname"
+	ApiKey 			= "apikey"
+	Nickname 		= "nickname"
+	ServerAddress	= "serveraddress"
 
 class Modules:
 	CLI 			= "c"
