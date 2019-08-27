@@ -25,6 +25,9 @@ def run():
 	nicknameIndex = 0
 
 	if not disconnected:
+		clientQuery.connect(SERVERADDRESS)
+		clientQuery.updateBot()
+
 		bot.addThread(target=startKeepingAliveQueryConnection, daemon=True)
 		bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
 
@@ -95,6 +98,13 @@ def startCheckingForTeamspeakCommand():
 			with bot.lock:
 				cli.handleCommand(command, prefix=Prefixes.Teamspeak)
 
+def handleTeamspeakCommand(event):
+	try:
+		pass
+	except:
+		pass
+	return False
+
 def sendToChannel(string):
 	with bot.clientQueryLock:
 		clientQuery.sendMessageToCurrentChannel(string)
@@ -137,28 +147,28 @@ class ClientQuery:
 			disconnected = True
 			print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
 			print("running without teamspeak interface")
-		else:
-			self.updateBot()
-			#self.connect()
 
 	def createQuery(self, HOST, APIKEY):
 		try:
 			ts3conn = ts3.query.TS3ClientConnection(HOST)
 			ts3conn.auth(apikey=APIKEY)
-			ts3conn.use()	
+			ts3conn.use()
 			return ts3conn
 		except:
 			print("couldn't connect to teamspeak")
 		return None
 
-	def connect(self):
-		if len(SERVERADDRESS) > 0:
+	def connect(self, address):
+		if len(address) > 0:
 			try:
-				serverInfo = self.mainConnection.serverconnectinfo()
-				if serverInfo["ip"] != SERVERADDRESS:
-					self.mainConnection.connect(address=SERVERADDRESS) #TODO replace with correct function
-			except:
-				print("couldn't connect to " + SERVERADDRESS)
+				serverInfo = None
+				try:
+					serverInfo = self.mainConnection.serverconnectinfo()
+				except:
+					self.mainConnection.send("connect", {"address":address})
+			except Exception as e:
+				print("couldn't connect to " + address)
+				print(e)
 
 	def updateBot(self):
 		try:
@@ -192,7 +202,7 @@ class ClientQuery:
 
 		return None
 
-	def connectToChannel(cid):
+	def moveToChannel(cid):
 		clid = getClientID()
 		if clid != None:
 			mainConnection.clientmove(cid=cid, clid=clid)
@@ -237,11 +247,14 @@ class ClientQuery:
 
 
 	def setDescription(self, description):
-		cldbid = self.getDatabaseClientID()
+		try:
+			cldbid = self.getDatabaseClientID()
 
-		if cldbid != None:
-			self.mainConnection.clientdbedit(cldbid=cldbid, client_description=description)
-		else:
+			if cldbid != None:
+				self.mainConnection.clientdbedit(cldbid=cldbid, client_description=description)
+			else:
+				print("couldn't update description")
+		except:
 			print("couldn't update description")
 
 	def registerForTextEvents(self):
@@ -256,8 +269,9 @@ class ClientQuery:
 			event = self.listeningConnection.wait_for_event(timeout=timeout)
 			clid = self.getClientID(self.listeningConnection)
 			if event[0]["invokerid"] != clid:
-				print(event[0]["msg"])
-				return event[0]["msg"]
+				if not handleTeamspeakCommand(event):
+					print(event[0]["msg"])
+					return event[0]["msg"]
 		except:
 			pass
 		

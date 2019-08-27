@@ -101,8 +101,6 @@ def handleCommand(command, prefix=("",)):
 				playlist(command)
 			else:
 				bot.report("the command: " + command.name + " wasn't found")
-		else:
-			bot.report("prefix not found")
 	else:
 		bot.report("wow that's impressive")
 
