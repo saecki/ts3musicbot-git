@@ -108,12 +108,11 @@ def stringToCommand(string):
 
 	if type(string) == str:
 		string = string.rstrip()
-		string = string.lower()
 
 		fields = string.split(" ")
 
 		if len(fields) > 0:
-			commandName = fields[0]
+			commandName = fields[0].lower()
 
 			command = Command(commandName)
 
@@ -154,29 +153,13 @@ def getNumberFromString(string):
 #url
 #
 
-def isURL(string):
-	url = string.lower()
-	if "[url]" in url and "[/url]" in url:
-		return True
-	else:
-		return False
-
-def getURL(string):
-	url = string
-	url = url.replace("[URL]", "")
-	url = url.replace("[/URL]", "")
-	url = url.replace("[url]", "")
-	url = url.replace("[/url]", "")
-
-	return url
-
 def isYoutubeURL(url):
 	if "https://youtu.be/" in url or "https://www.youtube.com/watch?v=" in url:
 		return True
 	else:
 		return False
 
-def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=None):
+def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=()):
 	length = len(args)
 
 	if startWithArgVal:
@@ -229,11 +212,13 @@ def getYoutubeSongFromString(string):
 
 def getTitleFromYoutubeURL(url):
 	#try:
+	print(url)
 	response = urllib.request.urlopen(url)
 	html = response.read()
 	soup = BeautifulSoup(html, "html.parser")
 	print(soup)
-	vid = soup.find(attrs={"class":"yt-uix-tile-link"})
+	vid = soup.find(attrs={"id":"eow-title"})
+	print(vid)
 	title = vid["title"]
 
 	return title
@@ -244,24 +229,16 @@ def getTitleFromYoutubeURL(url):
 	return None
 
 def getYoutubeSongFromPlayCommand(command):
-	print("arg0: " + command.args[0].name)
-	if isURL(command.args[0].name):
-		print("yeet 1")
-		url = getURL(command.args[0].name)
-		if isYoutubeURL(url):
-			title = getTitleFromYoutubeURL(url)
-			if title != None:
-				song = Song(url, title=title)
-				return song
-			else:
-				bot.report("couldn't find the song")
+	url = command.args[0].name
+	if isYoutubeURL(url):
+		title = getTitleFromYoutubeURL(url)
+		if title != None:
+			song = Song(url, title=title)
+			return song
 		else:
-			bot.report(url + " is no valid youtube url")
+			bot.report("couldn't find the song")
 	else:
-		print("yeet 2")
-		string = ""
-		for arg in command.args:
-			string += arg.name + " "
+		string = getCommandArgsAsString(command.args)
 
 		song = getYoutubeSongFromString(string)
 		
@@ -273,14 +250,11 @@ def getYoutubeSongFromPlayCommand(command):
 	return None
 
 def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
-	if isURL(args[0].value):
-		url = getURL(args[0].value)
-		if isYoutubeURL(url):
-			title = getTitleFromYoutubeURL(url)
-			song = Song(url, title=title)
-			return song
-		else:
-			bot.report(url + " is no valid youtube url")
+	url = args[0].value
+	if isYoutubeURL(url):
+		title = getTitleFromYoutubeURL(url)
+		song = Song(url, title=title)
+		return song
 	elif args[0].value in ArgValues.CurrentSong:
 		return bot.getCurrentSong()
 	elif getNumberFromString(args[0].value) != None:
@@ -512,21 +486,23 @@ def volume(command):
 		if command.args[0].name.startswith("+"):
 			string = command.args[0].name[1:]
 			volume = getNumberFromString(string)
-			
 			if volume != None:
 				bot.plusVolume(int(volume))
+				return
 
 		elif command.args[0].name.startswith("-"):
 			string = command.args[0].name[1:]
 			volume = getNumberFromString(string)
-			
 			if volume != None:
 				bot.minusVolume(int(volume))
+				return
 
 		else:
 			volume = getNumberFromString(command.args[0].name)
 			if volume != None:
 				bot.setVolume(int(volume))
+				return
+	print("specified arguments not correct or missing")
 
 def lyrics(command):
 	bot.report("search them yourself faggot")
