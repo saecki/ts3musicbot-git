@@ -12,6 +12,7 @@ class Modules:
 	CLI 			= "c"
 	WebInterface 	= "w"
 	Teamspeak	 	= "t"
+	Debug			= "d"
 
 class Prefixes:
 	Teamspeak 	= ("!", ":")

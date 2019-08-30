@@ -5,6 +5,7 @@ import ts3
 import ts3musicbot as bot
 
 from common.classproperties import FileSystem
+from common.constants import Commands
 from common.constants import JSONFields
 from common.constants import Prefixes
 from modules import cli
@@ -100,7 +101,9 @@ def startCheckingForTeamspeakCommand():
 
 def handleTeamspeakCommand(event):
 	try:
-		pass
+		msg = event["msg"]
+		if msg in Commands.ComeOver:
+			return clientQuery.comeOver()
 	except:
 		pass
 	return False
@@ -157,6 +160,16 @@ class ClientQuery:
 		except:
 			print("couldn't connect to teamspeak")
 		return None
+
+	def comeOver(self, event):
+		try:
+			clientid = event["invokerid"]
+			clientvariables = self.mainConnection.clientvariable(clientid, "cid")
+			channelid = clientvariables["cid"]
+			self.moveToChannel(channelid)
+			return True
+		except:
+			return False
 
 	def connect(self, address):
 		if len(address) > 0:
@@ -268,9 +281,11 @@ class ClientQuery:
 		try:
 			event = self.listeningConnection.wait_for_event(timeout=timeout)
 			clid = self.getClientID(self.listeningConnection)
-			if event[0]["invokerid"] != clid:
+			invokerid = event[0]["invokerid"]
+			msg = event[0]["msg"]
+			if invokerid != clid or bot.debug:
+				print("invokerid: " + invokerid + " msg: " + msg)
 				if not handleTeamspeakCommand(event):
-					print(event[0]["msg"])
 					return event[0]["msg"]
 		except:
 			pass

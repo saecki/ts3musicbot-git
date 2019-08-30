@@ -30,12 +30,14 @@ lock = None
 clientQueryLock = None
 
 running = True
+debug = False
 
 def run(args= Modules.Teamspeak + Modules.CLI):
 	global loop
 	global lock
 	global clientQueryLock
 	global terminalOnly
+	global debug
 
 	if not createVlcPlayer():
 		exit()
@@ -53,6 +55,10 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 
 	if Modules.CLI in args:
 		modules.append(cli)
+
+	if Modules.Debug in args:
+		print("running in debug mode")
+		debug = True
 
 	for m in modules:
 		m.run()

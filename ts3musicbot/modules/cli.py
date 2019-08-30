@@ -155,7 +155,8 @@ def getNumberFromString(string):
 #
 
 def isURL(string):
-	if "[URL]" in string and "[/URL]" in string:
+	url = string.lower()
+	if "[url]" in url and "[/url]" in url:
 		return True
 	else:
 		return False
@@ -164,6 +165,8 @@ def getURL(string):
 	url = string
 	url = url.replace("[URL]", "")
 	url = url.replace("[/URL]", "")
+	url = url.replace("[url]", "")
+	url = url.replace("[/url]", "")
 
 	return url
 
@@ -224,16 +227,38 @@ def getYoutubeSongFromString(string):
 	
 	return None
 
+def getTitleFromYoutubeURL(url):
+	#try:
+	response = urllib.request.urlopen(url)
+	html = response.read()
+	soup = BeautifulSoup(html, "html.parser")
+	print(soup)
+	vid = soup.find(attrs={"class":"yt-uix-tile-link"})
+	title = vid["title"]
+
+	return title
+	#except Exception as e:
+		#bot.report("couldn't get title from youtube url")
+		#print(e)
+
+	return None
+
 def getYoutubeSongFromPlayCommand(command):
+	print("arg0: " + command.args[0].name)
 	if isURL(command.args[0].name):
+		print("yeet 1")
 		url = getURL(command.args[0].name)
 		if isYoutubeURL(url):
 			title = getTitleFromYoutubeURL(url)
-			song = Song(url, title=title)
-			return song
+			if title != None:
+				song = Song(url, title=title)
+				return song
+			else:
+				bot.report("couldn't find the song")
 		else:
 			bot.report(url + " is no valid youtube url")
 	else:
+		print("yeet 2")
 		string = ""
 		for arg in command.args:
 			string += arg.name + " "
@@ -270,20 +295,6 @@ def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
 		else:
 			bot.report("couldn't find any youtube song")
 	
-	return None
-
-def getTitleFromYoutubeURL(url):
-	try:
-		response = urllib.request.urlopen(url)
-		html = response.read()
-		soup = BeautifulSoup(html, "html.parser")
-		vid = soup.find(attrs={"class":"yt-uix-tile-link"})
-		title = vid["title"]
-
-		return title
-	except:
-		bot.report("couldn't get title from youtube url")
-
 	return None
 
 #
