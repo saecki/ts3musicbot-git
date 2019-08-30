@@ -108,6 +108,7 @@ def stringToCommand(string):
 
 	if type(string) == str:
 		string = string.rstrip()
+		string = stripURL(string)
 
 		fields = string.split(" ")
 
@@ -148,6 +149,14 @@ def getNumberFromString(string):
 	except:
 		return None
 	return num
+
+def stripURL(string):
+	string = string.replace("[url]", "")
+	string = string.replace("[/url]", "")
+	string = string.replace("[URL]", "")
+	string = string.replace("[/URL]", "")
+
+	return string
 
 #
 #url
@@ -211,20 +220,16 @@ def getYoutubeSongFromString(string):
 	return None
 
 def getTitleFromYoutubeURL(url):
-	#try:
-	print(url)
-	response = urllib.request.urlopen(url)
-	html = response.read()
-	soup = BeautifulSoup(html, "html.parser")
-	print(soup)
-	vid = soup.find(attrs={"id":"eow-title"})
-	print(vid)
-	title = vid["title"]
+	try:
+		response = urllib.request.urlopen(url)
+		html = response.read()
+		soup = BeautifulSoup(html, "html.parser")
+		vid = soup.find(attrs={"id":"eow-title"})
+		title = vid["title"]
 
-	return title
-	#except Exception as e:
-		#bot.report("couldn't get title from youtube url")
-		#print(e)
+		return title
+	except Exception as e:
+		bot.report("couldn't get title from youtube url")
 
 	return None
 
@@ -502,7 +507,7 @@ def volume(command):
 			if volume != None:
 				bot.setVolume(int(volume))
 				return
-	print("specified arguments not correct or missing")
+	bot.report("specified arguments not correct or missing")
 
 def lyrics(command):
 	bot.report("search them yourself faggot")

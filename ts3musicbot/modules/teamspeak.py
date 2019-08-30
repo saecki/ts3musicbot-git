@@ -286,7 +286,7 @@ class ClientQuery:
 			if invokerid != clid or bot.debug:
 				print("invokerid: " + invokerid + " msg: " + msg)
 				if not handleTeamspeakCommand(event):
-					return event[0]["msg"]
+					return msg
 		except:
 			pass
 		
