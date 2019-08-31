@@ -22,12 +22,12 @@ def run():
 	global clientQuery
 
 	readData()
-	clientQuery = ClientQuery()
+	clientQuery = ClientQuery(HOST, APIKEY)
 	nicknameIndex = 0
 
 	if not disconnected:
 		clientQuery.connect(SERVERADDRESS)
-		clientQuery.updateBot()
+		updateBot()
 
 		bot.addThread(target=startKeepingAliveQueryConnection, daemon=True)
 		bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
@@ -103,34 +103,18 @@ def handleTeamspeakCommand(event):
 	try:
 		msg = event["msg"]
 		if msg in Commands.ComeOver:
-			return clientQuery.comeOver()
+			comeOver(event)
+		else:
+			return False
+		return True
 	except:
-		pass
-	return False
+		return False
 
-def sendToChannel(string):
-	with bot.clientQueryLock:
-		clientQuery.sendMessageToCurrentChannel(string)
-
-def updateNickname():
-	msg = cli.getCurrentSongTitle()
-
-	if msg != None:
-		if nicknameIndex > len(msg) - 5:
-			nicknameIndex = 0
-		
-		msg = msg[nicknameIndex:]
-
-		nickname = msg[:30] if len(msg) > 30 else msg
-
-		nicknameIndex += 1
-	
-	else:
-		nickname = clientQuery.NICKNAME
-
-	with bot.clientQueryLock:
-		clientQuery.setNickname(nickname)
-
+def updateBot():
+	try:
+		clientQuery.setNickname(NICKNAME)
+	except:
+		print("couldn't update nickname")
 
 def updateDescription():
 	msg = cli.getPlaybackInfo()
@@ -138,9 +122,22 @@ def updateDescription():
 	with bot.clientQueryLock:
 		clientQuery.setDescription(msg)
 
+def sendToChannel(string):
+	with bot.clientQueryLock:
+		clientQuery.sendMessageToCurrentChannel(string)
+
+def comeOver(event):
+	try:
+		clientID = event["invokerid"]
+		channelID = clientQuery.getChannelID(clientID)
+		self.moveToChannel(channelID)
+	except Exception as e:
+		print("couldn't move over")
+		print(e)
+
 class ClientQuery:
 
-	def __init__(self):
+	def __init__(self, HOST, APIKEY):
 		global disconnected
 
 		self.mainConnection = self.createQuery(HOST, APIKEY)
@@ -157,19 +154,10 @@ class ClientQuery:
 			ts3conn.auth(apikey=APIKEY)
 			ts3conn.use()
 			return ts3conn
-		except:
+		except Exception as e:
 			print("couldn't connect to teamspeak")
+			print(e)
 		return None
-
-	def comeOver(self, event):
-		try:
-			clientid = event["invokerid"]
-			clientvariables = self.mainConnection.clientvariable(clientid, "cid")
-			channelid = clientvariables["cid"]
-			self.moveToChannel(channelid)
-			return True
-		except:
-			return False
 
 	def connect(self, address):
 		if len(address) > 0:
@@ -178,112 +166,46 @@ class ClientQuery:
 				try:
 					serverInfo = self.mainConnection.serverconnectinfo()
 				except:
-					self.mainConnection.send("connect", {"address":address})
+					return self.mainConnection.send("connect", {"address":address})
 			except Exception as e:
 				print("couldn't connect to " + address)
 				print(e)
 
-	def updateBot(self):
+	def moveToChannel(channelID):
 		try:
-			clientinfo = self.mainConnection.whoami()
-			clientid = clientinfo[0]["clid"]
-			clientvariables = self.mainConnection.clientvariable(clientid, "client_nickname")
-			clientnickname = clientvariables[0]["client_nickname"]
-
-			if NICKNAME != clientnickname:
-				self.setNickname(NICKNAME)
-		except:
-			print("couldn't update nickname")
-
-	def getClientID(self, ts3conn):
-		try:
-			clientinfo = ts3conn.whoami()
-			channelID = clientinfo[0]["clid"]
-			return channelID
-		except:
-			print("couldn't get client id")
-
-		return None
-
-	def getCurrentChannelID(self, ts3conn):
-		try:
-			clientinfo = ts3conn.whoami()
-			channelID = clientinfo[0]["cid"]
-			return channelID
-		except:
-			print("couldn't get channel id")
-
-		return None
-
-	def moveToChannel(cid):
-		clid = getClientID()
-		if clid != None:
-			mainConnection.clientmove(cid=cid, clid=clid)
-
-	def getDatabaseClientID(self):
-		try:
-			clid = self.getClientID(self.mainConnection)
-			clients = self.mainConnection.clientlist()
-
-			for c in clients:
-				if c["clid"] == clid:
-					cldbid = c["client_database_id"]
-					return cldbid
-		except:
-			print("couldn't get client database id")
-
-		return None
+			clientID = getClientID()
+			mainConnection.clientmove(cid=channelID, clid=clientID)
+		except Exception as e:
+			print("couldn't move to channel with id " + channelID)
+			print(e)
 
 	def sendMessageToCurrentChannel(self, message):
-		time.sleep(0.01)
-
 		try:
-			channelID = self.getCurrentChannelID(self.mainConnection)
-		except:
+			channelID = self.getCurrentChannelID()
+		except Exception as e:
 			print("couldn't get channel id")
-
-		time.sleep(0.01)
 
 		if channelID != None:
 			try:
 				self.mainConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
-			except:
-				print("couldn't send to channel")
-
-		time.sleep(0.1)
-
-	def setNickname(self, nickname):
-		try:
-			self.mainConnection.clientupdate(client_nickname=nickname)
-		except:
-			print("couldn't update nickname")
-
-
-	def setDescription(self, description):
-		try:
-			cldbid = self.getDatabaseClientID()
-
-			if cldbid != None:
-				self.mainConnection.clientdbedit(cldbid=cldbid, client_description=description)
-			else:
-				print("couldn't update description")
-		except:
-			print("couldn't update description")
+			except Exception as e:
+				print("couldn't send message to channel")
+				print(e)
 
 	def registerForTextEvents(self):
 		try:
 			self.listeningConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
-		except:
+		except Exception as e:
 			print("couldn't register for text events from the teamspeak client")
+			print(e)
 
 	def listenForTextEvents(self, timeout=60):
-
 		try:
 			event = self.listeningConnection.wait_for_event(timeout=timeout)
-			clid = self.getClientID(self.listeningConnection)
-			invokerid = event[0]["invokerid"]
+			clientID = self.getClientID()
+			invokerID = event[0]["invokerid"]
 			msg = event[0]["msg"]
-			if invokerid != clid or bot.debug:
+			if invokerID != clientID or bot.debug:
 				print("invokerid: " + invokerid + " msg: " + msg)
 				if not handleTeamspeakCommand(event):
 					return msg
@@ -295,5 +217,70 @@ class ClientQuery:
 	def sendKeepalive(self):
 		try:
 			self.listeningConnection.send_keepalive()
-		except:
+		except Exception as e:
 			print("couldn't send keep alive to the teamspeak client")
+			print(e)
+
+	def setNickname(self, nickname):
+		try:
+			clientID = self.getClientID()
+			clientVariables = self.mainConnection.clientvariable(clientID, "client_nickname")
+			clientnickname = clientVariables[0]["client_nickname"]
+			if nickname != clientnickname:
+				self.mainConnection.clientupdate(client_nickname=nickname)
+		except Exception as e:
+			print("couldn't update teamspeak nickname")
+			print(e)
+
+	def setDescription(self, description):
+		try:
+			clientDatabaseID = self.getDatabaseClientID()
+			self.mainConnection.clientdbedit(cldbid=clientDatabaseID, client_description=description)
+		except Exception as e:
+			print("couldn't update teamspeak description")
+			print(e)
+
+	def getClientID(self):
+		try:
+			clientInfo = self.mainConnection.whoami()
+			clientID = clientInfo[0]["clid"]
+			return clientID
+		except Exception as e:
+			print("couldn't get client id")
+			print(e)
+
+		return None
+
+	def getCurrentChannelID(self):
+		try:
+			clientInfo = self.mainConnection.whoami()
+			channelID = clientInfo[0]["cid"]
+			return channelID
+		except Exception as e:
+			print("couldn't get channel id")
+			print(e)
+
+		return None
+
+	def getChannelID(self, clientID):
+		try:
+			clientVariables = self.mainConnection.clientvariable(clientID, "cid")
+			channelID = clientVariables["cid"]
+			return channelID
+		except Exception as e:
+			print("couldn't get channel id")
+			print(e)
+		
+		return None
+
+	def getDatabaseClientID(self):
+		try:
+			clientID = self.getClientID()
+			clientVariables = self.mainConnection.clientvariable(clientID, "client_database_id")
+			clientDatabaseID = clientVariables["client_database_id"]
+			return clientDatabaseID
+		except Exception as e:
+			print("couldn't get client database id")
+			print(e)
+
+		return None
