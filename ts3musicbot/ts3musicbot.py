@@ -50,11 +50,11 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	mainThread = addThread(target=mainLoop)
 	addThread(target=frequentlyWriteData, daemon=True)
 
-	if Modules.Teamspeak in args:
-		modules.append(teamspeak)
-
 	if Modules.CLI in args:
 		modules.append(cli)
+
+	if Modules.Teamspeak in args:
+		modules.append(teamspeak)
 
 	if Modules.Debug in args:
 		print("running in debug mode")
