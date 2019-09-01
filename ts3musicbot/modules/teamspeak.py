@@ -26,15 +26,9 @@ def run():
 	nicknameIndex = 0
 
 	if not disconnected:
-		clientQuery.connect(SERVERADDRESS)
-		while not clientQuery.isConnected():
-			print("connecting...")
-			time.sleep(0.2)
-		time.sleep(0.2)
-
-		updateBot()
-
-		bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+		if clientQuery.tryConnecting(SERVERADDRESS):
+			updateBot()
+			bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
 
 def update():
 	if not disconnected:
@@ -54,7 +48,7 @@ def readData():
 			data = json.load(jsonfile)	
 			
 			try:
-				APIKEY = data[JSONFields.ApiKey]
+				APIKEY = data[JSONFields.ApiKey]	
 			except:
 				print("couldn't read apikey")
 
@@ -145,21 +139,24 @@ def comeOver(event):
 
 class ClientQuery:
 
-	def __init__(self, HOST, APIKEY):
+	def __init__(self, HOST, apikey):
 		global disconnected
 
-		self.mainConnection = self.createQuery(HOST, APIKEY)
-		self.listeningConnection = self.createQuery(HOST, APIKEY)
+		self.host = HOST
+		self.lastAddress = None
+
+		self.mainConnection = self.createQuery(HOST, apikey)
+		self.listeningConnection = self.createQuery(HOST, apikey)
 
 		if self.mainConnection == None or self.listeningConnection == None:
 			disconnected = True
 			print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
 			print("running without teamspeak interface")
 
-	def createQuery(self, HOST, APIKEY):
+	def createQuery(self, HOST, apikey):
 		try:
 			ts3conn = ts3.query.TS3ClientConnection(HOST)
-			ts3conn.auth(apikey=APIKEY)
+			ts3conn.auth(apikey=apikey)
 			ts3conn.use()
 			return ts3conn
 		except Exception as e:
@@ -167,14 +164,45 @@ class ClientQuery:
 			print(e)
 		return None
 
+	def handleEcxeption(self, exception):
+		msg = str(exception)
+		if exception.__class__ == ts3.query.TS3QueryError:
+			if "1794" in msg and self.lastAddress != None:
+				self.tryConnecting(self.lastAddress)
+			else:
+				print(msg)
+		else:
+			print(msg)
+
+	#
+	#connection
+	#
+
+	def tryConnecting(self, address):
+		self.connect(address)
+		for i in range(50):
+			time.sleep(0.2)
+			if self.isConnected():
+				print("connected to " + address)
+				time.sleep(0.5)
+				return True
+			else:
+				print("connecting...")
+		print("connection failed")
+		return False
+
 	def connect(self, address):
 		if len(address) > 0:
+			self.lastAddress = address
 			try:
 				serverInfo = None
 				try:
 					serverInfo = self.mainConnection.serverconnectinfo()
 				except:
 					self.mainConnection.send("connect", {"address":address})
+				else:
+					if serverInfo[0]["ip"] != address:
+						self.mainConnection.send("connect", {"address":address})
 			except Exception as e:
 				print("couldn't connect to " + address)
 				print(e)
@@ -183,7 +211,7 @@ class ClientQuery:
 		try:
 			serverInfo = self.mainConnection.serverconnectinfo()
 			return True
-		except:
+		except Exception as e:
 			return False
 
 	def moveToChannel(self, channelID):
@@ -192,7 +220,7 @@ class ClientQuery:
 			self.mainConnection.clientmove(cid=channelID, clid=clientID)
 		except Exception as e:
 			print("couldn't move to channel with id " + channelID)
-			print(e)
+			self.handleEcxeption(e)
 
 	def sendMessageToCurrentChannel(self, message):
 		try:
@@ -200,6 +228,7 @@ class ClientQuery:
 			self.mainConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
 		except Exception as e:
 			print("couldn't get channel id")
+			self.handleEcxeption(e)
 
 	def setNickname(self, nickname):
 		try:
@@ -210,7 +239,7 @@ class ClientQuery:
 				self.mainConnection.clientupdate(client_nickname=nickname)
 		except Exception as e:
 			print("couldn't update teamspeak nickname")
-			print(e)
+			self.handleEcxeption(e)
 
 	def setDescription(self, description):
 		try:
@@ -218,7 +247,7 @@ class ClientQuery:
 			self.mainConnection.clientdbedit(cldbid=clientDatabaseID, client_description=description)
 		except Exception as e:
 			print("couldn't update teamspeak description")
-			print(e)
+			self.handleEcxeption(e)
 
 	def getClientID(self):
 		try:
@@ -227,7 +256,7 @@ class ClientQuery:
 			return clientID
 		except Exception as e:
 			print("couldn't get client id")
-			print(e)
+			self.handleEcxeption(e)
 
 		return None
 
@@ -238,7 +267,7 @@ class ClientQuery:
 			return channelID
 		except Exception as e:
 			print("couldn't get current channel id")
-			print(e)
+			self.handleEcxeption(e)
 
 		return None
 
@@ -250,7 +279,7 @@ class ClientQuery:
 					return c["cid"]
 		except Exception as e:
 			print("couldn't get channel id")
-			print(e)
+			self.handleEcxeption(e)
 		
 		return None
 
@@ -264,7 +293,7 @@ class ClientQuery:
 			return clientDatabaseID
 		except Exception as e:
 			print("couldn't get client database id")
-			print(e)
+			self.handleEcxeption(e)
 
 		return None
 

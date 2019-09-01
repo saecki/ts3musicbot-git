@@ -319,7 +319,7 @@ def getCurrentSongTitle():
 	return None
 
 def getPosition():
-	return str(round(bot.player.get_rate() * 100)) + "%"
+	return str(round(bot.player.get_position() * 100)) + "%"
 
 def getSpeed():
 	return str(round(bot.player.get_rate() * 100)) + "%"
