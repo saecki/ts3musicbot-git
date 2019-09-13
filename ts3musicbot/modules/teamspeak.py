@@ -144,6 +144,7 @@ class ClientQuery:
 
 		self.host = HOST
 		self.lastAddress = None
+		self.lastNickname = None
 
 		self.mainConnection = self.createQuery(HOST, apikey)
 		self.listeningConnection = self.createQuery(HOST, apikey)
@@ -169,6 +170,8 @@ class ClientQuery:
 		if exception.__class__ == ts3.query.TS3QueryError:
 			if "1794" in msg and self.lastAddress != None:
 				self.tryConnecting(self.lastAddress)
+				if self.lastNickname != None:
+					self.setNickname(self.lastNickname)
 			else:
 				print(msg)
 		else:
@@ -231,6 +234,7 @@ class ClientQuery:
 			self.handleEcxeption(e)
 
 	def setNickname(self, nickname):
+		self.lastNickname = nickname
 		try:
 			clientID = self.getClientID()
 			clientVariables = self.mainConnection.clientvariable(clientID, "client_nickname")
