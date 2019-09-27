@@ -16,7 +16,7 @@ from common.constants import Commands
 from common.constants import Prefixes
 
 def run():
-	bot.addThread(target=startCheckingForTerminalCommand, daemon=True)
+	bot.addThread(target=startCheckingForTerminalCommand)
 
 def update():
 	pass
@@ -30,16 +30,12 @@ def report(string):
 
 def startCheckingForTerminalCommand():
 	while bot.running:
-		try:
-			string = input()
-		except:
-			print("terminal input failed")
-		else:
-			if string == "exit":
-				bot.quit()
-			command = stringToCommand(string)
-			with bot.lock:
-				handleCommand(command)
+		string = input()
+		if string == "exit":
+			bot.quit()
+		command = stringToCommand(string)
+		with bot.lock:
+			handleCommand(command)
 
 #
 #commands

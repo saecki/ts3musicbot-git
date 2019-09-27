@@ -15,22 +15,20 @@ from common.constants import Modules
 from modules import cli
 from modules import teamspeak
 
+modules = []
+threads = []
+lock = None
+clientQueryLock = None
+running = True
+debug = False
+
 Instance = None
 player = None
-
-modules = []
 
 playlists = []
 songQueue = []
 index = 0
 repeatSong = 0
-
-threads = []
-lock = None
-clientQueryLock = None
-
-running = True
-debug = False
 
 def run(args= Modules.Teamspeak + Modules.CLI):
 	global loop
@@ -47,7 +45,7 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	lock = threading.Lock()
 	clientQueryLock = threading.Lock()
 
-	mainThread = addThread(target=mainLoop)
+	mainThread = addThread(target=mainLoop, daemon=True)
 	addThread(target=frequentlyWriteData, daemon=True)
 
 	if Modules.CLI in args:
@@ -67,8 +65,6 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 
 	report("ready")
 
-	mainThread.join()
-
 def quit():
 	global running
 
@@ -81,14 +77,12 @@ def startNewThread(target=None, args=None, daemon=False):
 	t = createThread(target=target, args=args, daemon=daemon)
 	if t != None:
 		t.start()
-
 	return t
 
 def addThread(target=None, args=None, daemon=False):
 	t = createThread(target=target, args=args, daemon=daemon)
 	if t != None:
 		threads.append(t)
-
 	return t
 
 def createThread(target=None, args=None, daemon=False):
@@ -99,7 +93,6 @@ def createThread(target=None, args=None, daemon=False):
 		else:
 			t = threading.Thread(target=target, args=args)
 		t.setDaemon(daemon)
-
 		return t
 	return None
 
@@ -112,10 +105,8 @@ def mainLoop():
 	global index
 
 	while running:
-
 		for m in modules:
 			m.update()
-
 		if player.get_state() == vlc.State.Ended:
 			if repeatSong == 0:
 				next()
@@ -156,7 +147,6 @@ def getNumberBetween(number, min, max):
 #
 
 def writeData():
-
 	data = {}
 	data[JSONFields.Playlists] = []
 	data[JSONFields.SongQueue] = []
@@ -173,7 +163,7 @@ def writeData():
 		with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	except:
-		report("couldn't write data")
+		print("couldn't write data")
 
 def readData():
 	global playlists
@@ -187,25 +177,25 @@ def readData():
 				for p in data[JSONFields.Playlists]:
 					playlists.append(Playlist.jsonToPlaylist(p))
 			except:
-				report("couldn't read playlists")
+				print("couldn't read playlists")
 
 			try:
 				for s in data[JSONFields.SongQueue]:
 					songQueue.append(Song.jsonToSong(s))
 			except:
-				report("couldn't read songQueue")
+				print("couldn't read songQueue")
 			
 			try:
 				index = data[JSONFields.Index]
 				if index >= len(songQueue):
 					index = len(songQueue - 1)
 			except:
-				report("couldn't read index")
+				print("couldn't read index")
 			
 			try:
 				repeatSong = data[JSONFields.RepeatSong]
 			except:
-				report("couldn't read repeatSong")
+				print("couldn't read repeatSong")
 		
 		return True
 	except:
@@ -226,7 +216,6 @@ def getSong(index):
 	if length > 0:
 		i = getNumberBetween(index, 0, length - 1)
 		return songQueue[i]
-
 	return None
 
 
@@ -244,7 +233,6 @@ def getBestYoutubeAudioURL(url):
 	video = pafy.new(url)
 	best = video.getbestaudio()
 	playurl = best.url
-
 	return playurl
 
 #

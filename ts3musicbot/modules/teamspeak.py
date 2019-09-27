@@ -60,7 +60,7 @@ def readData():
 			try:
 				SERVERADDRESS = data[JSONFields.ServerAddress]
 			except Exception as e:
-				print("couldn't read SERVERADDRESS")
+				print("couldn't read serveradress")
 				print(e)
 
 		return True
@@ -165,18 +165,6 @@ class ClientQuery:
 			print(e)
 		return None
 
-	def handleEcxeption(self, exception):
-		msg = str(exception)
-		if exception.__class__ == ts3.query.TS3QueryError:
-			if "1794" in msg and self.lastAddress != None:
-				self.tryConnecting(self.lastAddress)
-				if self.lastNickname != None:
-					self.setNickname(self.lastNickname)
-			else:
-				print(msg)
-		else:
-			print(msg)
-
 	#
 	#connection
 	#
@@ -208,7 +196,7 @@ class ClientQuery:
 						self.mainConnection.send("connect", {"address":address})
 			except Exception as e:
 				print("couldn't connect to " + address)
-				print(e)
+				raise e
 
 	def isConnected(self):
 		try:
@@ -223,7 +211,7 @@ class ClientQuery:
 			self.mainConnection.clientmove(cid=channelID, clid=clientID)
 		except Exception as e:
 			print("couldn't move to channel with id " + channelID)
-			self.handleEcxeption(e)
+			raise e
 
 	def sendMessageToCurrentChannel(self, message):
 		try:
@@ -231,7 +219,7 @@ class ClientQuery:
 			self.mainConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
 		except Exception as e:
 			print("couldn't get channel id")
-			self.handleEcxeption(e)
+			raise e
 
 	def setNickname(self, nickname):
 		self.lastNickname = nickname
@@ -243,7 +231,7 @@ class ClientQuery:
 				self.mainConnection.clientupdate(client_nickname=nickname)
 		except Exception as e:
 			print("couldn't update teamspeak nickname")
-			self.handleEcxeption(e)
+			raise e
 
 	def setDescription(self, description):
 		try:
@@ -251,7 +239,7 @@ class ClientQuery:
 			self.mainConnection.clientdbedit(cldbid=clientDatabaseID, client_description=description)
 		except Exception as e:
 			print("couldn't update teamspeak description")
-			self.handleEcxeption(e)
+			raise e
 
 	def getClientID(self):
 		try:
@@ -260,7 +248,7 @@ class ClientQuery:
 			return clientID
 		except Exception as e:
 			print("couldn't get client id")
-			self.handleEcxeption(e)
+			raise e
 
 		return None
 
@@ -271,7 +259,7 @@ class ClientQuery:
 			return channelID
 		except Exception as e:
 			print("couldn't get current channel id")
-			self.handleEcxeption(e)
+			raise e
 
 		return None
 
@@ -283,7 +271,7 @@ class ClientQuery:
 					return c["cid"]
 		except Exception as e:
 			print("couldn't get channel id")
-			self.handleEcxeption(e)
+			raise e
 		
 		return None
 
@@ -297,7 +285,7 @@ class ClientQuery:
 			return clientDatabaseID
 		except Exception as e:
 			print("couldn't get client database id")
-			self.handleEcxeption(e)
+			raise e
 
 		return None
 
@@ -310,24 +298,19 @@ class ClientQuery:
 			self.listeningConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
 		except Exception as e:
 			print("couldn't register for text events from the teamspeak client")
-			print(e)
+			raise e
 
 	def listenForTextEvents(self, timeout=200):
-		try:
-			event = self.listeningConnection.wait_for_event(timeout=timeout)
-			clientInfo = self.listeningConnection.whoami()
-			clientID = clientInfo[0]["clid"]
-			invokerID = event[0]["invokerid"]
-			msg = event[0]["msg"]
-			if bot.debug:
-				print("invokerid: " + invokerID + " msg: " + msg)
-				if not handleTeamspeakCommand(event):
-					return msg
-			elif invokerID != clientID:
-				if not handleTeamspeakCommand(event):
-					return msg
-			self.listeningConnection.send_keepalive()
-		except Exception as e:
-			print(e)
-		
-		return None
+		event = self.listeningConnection.wait_for_event(timeout=timeout)
+		clientInfo = self.listeningConnection.whoami()
+		clientID = clientInfo[0]["clid"]
+		invokerID = event[0]["invokerid"]
+		msg = event[0]["msg"]
+		if bot.debug:
+			print("invokerid: " + invokerID + " msg: " + msg)
+			if not handleTeamspeakCommand(event):
+				return msg
+		elif invokerID != clientID:
+			if not handleTeamspeakCommand(event):
+				return msg
+		self.listeningConnection.send_keepalive()
