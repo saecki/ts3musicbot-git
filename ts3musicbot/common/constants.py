@@ -7,6 +7,7 @@ class JSONFields:
 	ApiKey 			= "apikey"
 	Nickname 		= "nickname"
 	ServerAddress	= "serveraddress"
+	TeamspeakPath	= "teamspeakpath"
 
 class Modules:
 	CLI 			= "c"

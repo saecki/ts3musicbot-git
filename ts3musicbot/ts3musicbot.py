@@ -45,7 +45,7 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	lock = threading.Lock()
 	clientQueryLock = threading.Lock()
 
-	mainThread = addThread(target=mainLoop, daemon=True)
+	mainThread = addThread(target=mainLoop)
 	addThread(target=frequentlyWriteData, daemon=True)
 
 	if Modules.CLI in args:
@@ -160,7 +160,7 @@ def writeData():
 		data[JSONFields.SongQueue].append(s.toJSON())
 
 	try:
-		with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
+		with open(FileSystem.getDataFilePath(), "w") as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	except:
 		print("couldn't write data")
@@ -171,7 +171,7 @@ def readData():
 	global repeatSong
 
 	try:
-		with open(FileSystem.getConfigFilePath()) as jsonfile:
+		with open(FileSystem.getDataFilePath()) as jsonfile:
 			data = json.load(jsonfile)
 			try:
 				for p in data[JSONFields.Playlists]:
@@ -202,7 +202,7 @@ def readData():
 		report("couldn't read config file")
 		report("trying to create the conifg folder")
 		try:
-			os.mkdir(FileSystem.getConfigFolderPath())
+			os.mkdir(FileSystem.getDataFolderPath())
 		except FileExistsError:	
 			report("config folder existed")
 	return False

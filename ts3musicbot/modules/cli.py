@@ -16,7 +16,7 @@ from common.constants import Commands
 from common.constants import Prefixes
 
 def run():
-	bot.addThread(target=startCheckingForTerminalCommand)
+	bot.addThread(target=startCheckingForTerminalCommand, daemon=True)
 
 def update():
 	pass

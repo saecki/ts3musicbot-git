@@ -1,4 +1,6 @@
 import json
+import subprocess
+import telnetlib
 import time
 import ts3
 
@@ -14,21 +16,34 @@ APIKEY = ""
 NICKNAME = ""
 SERVERADDRESS = ""
 HOST = "localhost"
+TEAMSPEAKPATH = ""
 
 clientQuery = None
 disconnected = False
 
+lastDescription = None
+
 def run():
 	global clientQuery
+	global disconnected
 
 	readData()
+	startTeamspeakThread(TEAMSPEAKPATH)
 	clientQuery = ClientQuery(HOST, APIKEY)
 	nicknameIndex = 0
 
 	if not disconnected:
-		if clientQuery.tryConnecting(SERVERADDRESS):
+		if len(SERVERADDRESS) > 0:
+			if clientQuery.tryConnecting(SERVERADDRESS):
+				updateBot()
+				bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+		elif clientQuery.isConnected():
 			updateBot()
 			bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+		else:
+			disconnected = True
+			print("connect to a teamspeak server first or set a server address in the config.json file")
+			print("running without teamspeak interface")
 
 def update():
 	if not disconnected:
@@ -42,9 +57,10 @@ def readData():
 	global APIKEY
 	global NICKNAME
 	global SERVERADDRESS
+	global TEAMSPEAKPATH
 
 	try:
-		with open(FileSystem.getClientQueryFilePath()) as jsonfile:  
+		with open(FileSystem.getConfigFilePath()) as jsonfile:  
 			data = json.load(jsonfile)	
 			
 			try:
@@ -61,25 +77,52 @@ def readData():
 				SERVERADDRESS = data[JSONFields.ServerAddress]
 			except Exception as e:
 				print("couldn't read serveradress")
-				print(e)
+
+			try:
+				TEAMSPEAKPATH = data[JSONFields.TeamspeakPath]
+			except Exception as e:
+				print("couldn't read teamspeakpath")
 
 		return True
 	except:
 		print("couldn't read config file")
 		print("trying to create a ts3clientquery config file")
 		try:
-			with open(FileSystem.getClientQueryFilePath(), "w") as jsonfile:
+			with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
 				data = {}	
 				data[JSONFields.ApiKey] = "YOURAPIKEY"
 				data[JSONFields.Nickname] = "Musicbot"
 				data[JSONFields.ServerAddress] = ""
+				data[JSONFields.TeamspeakPath] = ""
 
 				json.dump(data, jsonfile, indent=4)
 
-				print("created a config.json file in ts3musicbot/data you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
+				print("created a config.json file in " + FileSystem.getConfigFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
 		except FileExistsError:	
 			print("couldn't create config file")
 	return False
+
+def startTeamspeakThread(teamspeakPath):
+	if len(teamspeakPath) > 0:
+		print("starting teamspeak in: " + teamspeakPath)
+		bot.startNewThread(target=startTeamspeak, args=(teamspeakPath,))
+		for i in range(100):
+			time.sleep(0.2)
+			try:
+				tn = telnetlib.Telnet(HOST, 25639)
+			except:
+				print("starting...")
+			else:
+				tn.close()
+				del tn
+				print("started teamspeak")
+				return True
+		print("starting teamspeak failed")
+		return False
+
+
+def startTeamspeak(teamspeakPath):
+	subprocess.call(teamspeakPath)
 
 def startCheckingForTeamspeakCommand():
 	clientQuery.registerForTextEvents()
@@ -119,10 +162,15 @@ def updateBot():
 		print("couldn't update nickname")
 
 def updateDescription():
+	global lastDescription
+
 	msg = cli.getPlaybackInfo()
-	
-	with bot.clientQueryLock:
-		clientQuery.setDescription(msg)
+
+	if not msg == lastDescription:
+		
+		with bot.clientQueryLock:
+			clientQuery.setDescription(msg)
+		lastDescription = msg
 
 def sendToChannel(string):
 	with bot.clientQueryLock:
@@ -143,8 +191,6 @@ class ClientQuery:
 		global disconnected
 
 		self.host = HOST
-		self.lastAddress = None
-		self.lastNickname = None
 
 		self.mainConnection = self.createQuery(HOST, apikey)
 		self.listeningConnection = self.createQuery(HOST, apikey)
@@ -170,6 +216,7 @@ class ClientQuery:
 	#
 
 	def tryConnecting(self, address):
+		print("connecting to " + address)
 		self.connect(address)
 		for i in range(50):
 			time.sleep(0.2)
@@ -184,7 +231,6 @@ class ClientQuery:
 
 	def connect(self, address):
 		if len(address) > 0:
-			self.lastAddress = address
 			try:
 				serverInfo = None
 				try:
@@ -222,7 +268,6 @@ class ClientQuery:
 			raise e
 
 	def setNickname(self, nickname):
-		self.lastNickname = nickname
 		try:
 			clientID = self.getClientID()
 			clientVariables = self.mainConnection.clientvariable(clientID, "client_nickname")

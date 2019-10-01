@@ -1,24 +1,40 @@
 import os
 
+from sys import platform
+
 class FileSystem:
 
-	def getConfigFolderPath():
-		path = os.path.abspath(".")
+	def getDataFolderPath():
+		if platform == "linux" or platform == "linux2":
+			path = os.getenv("HOME")
+			path += os.path.sep
+			path += ".local"
+			path += os.path.sep
+			path += "share"
+		elif platform == "darwin":
+			path = os.getenv("HOME")
+			path += os.path.sep
+			path += "Library"
+			path += os.path.sep
+			path += "Preferences"
+		elif platform == "win32":
+			path = os.getenv("APPDATA")
+		
 		path += os.path.sep
-		path += "data"
+		path += "ts3musicbot"
 
 		return path
 
-	def getConfigFilePath():
-		path = FileSystem.getConfigFolderPath()
+	def getDataFilePath():
+		path = FileSystem.getDataFolderPath()
 		if len(path) > 0:
 			path += os.path.sep
 		path += "data.json"
 
 		return path
 
-	def getClientQueryFilePath():
-		path = FileSystem.getConfigFolderPath()
+	def getConfigFilePath():
+		path = FileSystem.getDataFolderPath()
 		if len(path) > 0:
 			path += os.path.sep
 		path += "config.json"
