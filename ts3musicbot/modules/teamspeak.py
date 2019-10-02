@@ -97,7 +97,7 @@ def readData():
 
 				json.dump(data, jsonfile, indent=4)
 
-				print("created a config.json file in " + FileSystem.getConfigFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
+				print("created a config.json file in " + FileSystem.getDataFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
 		except FileExistsError:	
 			print("couldn't create config file")
 	return False
@@ -346,16 +346,20 @@ class ClientQuery:
 			raise e
 
 	def listenForTextEvents(self, timeout=200):
-		event = self.listeningConnection.wait_for_event(timeout=timeout)
-		clientInfo = self.listeningConnection.whoami()
-		clientID = clientInfo[0]["clid"]
-		invokerID = event[0]["invokerid"]
-		msg = event[0]["msg"]
-		if bot.debug:
-			print("invokerid: " + invokerID + " msg: " + msg)
-			if not handleTeamspeakCommand(event):
-				return msg
-		elif invokerID != clientID:
-			if not handleTeamspeakCommand(event):
-				return msg
-		self.listeningConnection.send_keepalive()
+		try:
+			event = self.listeningConnection.wait_for_event(timeout=timeout)
+		except:
+			pass
+		else:
+			clientInfo = self.listeningConnection.whoami()
+			clientID = clientInfo[0]["clid"]
+			invokerID = event[0]["invokerid"]
+			msg = event[0]["msg"]
+			if bot.debug:
+				print("invokerid: " + invokerID + " msg: " + msg)
+				if not handleTeamspeakCommand(event):
+					return msg
+			elif invokerID != clientID:
+				if not handleTeamspeakCommand(event):
+					return msg
+			self.listeningConnection.send_keepalive()
