@@ -42,7 +42,6 @@ class Commands:
 	Status			= ("status", 		"sa")
 	Playlist 		= ("playlist", 		"pll")
 	ComeOver		= ("comeover", 		"co")
-	GoHome			= ("gohome", 		"gh")
 
 class Args:
 	Create 	= ("create:", 	"cr:")

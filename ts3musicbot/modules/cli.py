@@ -105,14 +105,11 @@ def stringToCommand(string):
 	if type(string) == str:
 		string = string.rstrip()
 		string = stripURL(string)
-
 		fields = string.split(" ")
 
 		if len(fields) > 0:
 			commandName = fields[0].lower()
-
 			command = Command(commandName)
-
 			lastArg = None
 			value = False
 			
@@ -121,7 +118,6 @@ def stringToCommand(string):
 				if value:	
 					lastArg.value = fields[i]
 					command.args.append(lastArg)
-
 					value = False
 				else:
 					lastArg = Argument(fields[i])
@@ -130,9 +126,7 @@ def stringToCommand(string):
 						value = True
 					else:
 						command.args.append(lastArg)
-
 			return command
-
 	return None
 
 #
@@ -151,7 +145,6 @@ def stripURL(string):
 	string = string.replace("[/url]", "")
 	string = string.replace("[URL]", "")
 	string = string.replace("[/URL]", "")
-
 	return string
 
 #
@@ -174,7 +167,6 @@ def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=
 	else:
 		msg = ""
 
-
 	if end == None:
 		end = length
 
@@ -192,7 +184,6 @@ def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=
 					break
 				else:
 					msg += v + " " 
-
 	return msg
 
 
@@ -222,11 +213,9 @@ def getTitleFromYoutubeURL(url):
 		soup = BeautifulSoup(html, "html.parser")
 		vid = soup.find(attrs={"id":"eow-title"})
 		title = vid["title"]
-
 		return title
 	except Exception as e:
 		bot.report("couldn't get title from youtube url")
-
 	return None
 
 def getYoutubeSongFromPlayCommand(command):
@@ -240,14 +229,12 @@ def getYoutubeSongFromPlayCommand(command):
 			bot.report("couldn't find the song")
 	else:
 		string = getCommandArgsAsString(command.args)
-
 		song = getYoutubeSongFromString(string)
 		
 		if song != None:
 			return song
 		else:
 			bot.report("couldn't find any youtube song")
-	
 	return None
 
 def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
@@ -262,14 +249,12 @@ def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
 		return bot.getSong(int(getNumberFromString(args[0].value)))
 	elif tillArg in [a.name for a in args]:
 		string = getCommandArgsAsString(args, startWithArgVal=True, till=tillArg)
-
 		song = getYoutubeSongFromString(string)
 		
 		if song != None:
 			return song
 		else:
 			bot.report("couldn't find any youtube song")
-	
 	return None
 
 #
@@ -287,7 +272,6 @@ def getStatus():
 	msg += "repeat: " + getRepeat() + "\n"
 	msg += "index: " + str(bot.index) + "\n"
 	msg += "songQueue length: " + str(len(bot.songQueue)) + "\n"
-
 	return msg
 
 def getPlaybackInfo():
@@ -305,7 +289,6 @@ def getPlaybackInfo():
 
 		if bot.player.is_seekable():
 				msg += " | " + getPosition()
-
 	return msg
 
 def getCurrentSongTitle():
@@ -651,7 +634,6 @@ def playlistListAll():
 	for p in bot.playlists:
 		msg += "\n"
 		msg += playlistListPlaylist(p)
-
 	bot.report(msg)
 
 def playlistListPlaylist(playlist):
@@ -660,5 +642,4 @@ def playlistListPlaylist(playlist):
 	for s in playlist.songs:
 		msg += "(" + str(index) + ") " + s.title + " [url=" + s.url + "]URL[/url]\n"
 		index += 1
-
 	return msg

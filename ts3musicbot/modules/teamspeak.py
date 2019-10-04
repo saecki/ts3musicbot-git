@@ -97,7 +97,7 @@ def readData():
 
 				json.dump(data, jsonfile, indent=4)
 
-				print("created a config.json file in " + FileSystem.getDataFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. ")
+				print("created a config.json file in " + FileSystem.getDataFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. optionally you can change the nickname and specify a default server address and a teamspeak path to automatically start teamspeak.")
 		except FileExistsError:	
 			print("couldn't create config file")
 	return False
@@ -191,7 +191,6 @@ class ClientQuery:
 		global disconnected
 
 		self.host = HOST
-
 		self.mainConnection = self.createQuery(HOST, apikey)
 		self.listeningConnection = self.createQuery(HOST, apikey)
 
@@ -294,7 +293,6 @@ class ClientQuery:
 		except Exception as e:
 			print("couldn't get client id")
 			raise e
-
 		return None
 
 	def getCurrentChannelID(self):
@@ -305,7 +303,6 @@ class ClientQuery:
 		except Exception as e:
 			print("couldn't get current channel id")
 			raise e
-
 		return None
 
 	def getChannelID(self, clientID):
@@ -317,7 +314,6 @@ class ClientQuery:
 		except Exception as e:
 			print("couldn't get channel id")
 			raise e
-		
 		return None
 
 	def getDatabaseClientID(self):
@@ -331,7 +327,6 @@ class ClientQuery:
 		except Exception as e:
 			print("couldn't get client database id")
 			raise e
-
 		return None
 
 	#
