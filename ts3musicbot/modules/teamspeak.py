@@ -344,7 +344,7 @@ class ClientQuery:
 		try:
 			event = self.listeningConnection.wait_for_event(timeout=timeout)
 		except:
-			pass
+			self.listeningConnection.send_keepalive()
 		else:
 			clientInfo = self.listeningConnection.whoami()
 			clientID = clientInfo[0]["clid"]
@@ -357,4 +357,3 @@ class ClientQuery:
 			elif invokerID != clientID:
 				if not handleTeamspeakCommand(event):
 					return msg
-			self.listeningConnection.send_keepalive()
