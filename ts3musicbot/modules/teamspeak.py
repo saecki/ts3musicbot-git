@@ -37,9 +37,11 @@ def run():
 			if clientQuery.tryConnecting(SERVERADDRESS):
 				updateBot()
 				bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+				bot.addThread(target=startKeepingAliveClientQuery, daemon=True)
 		elif clientQuery.isConnected():
 			updateBot()
 			bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
+			bot.addThread(target=startKeepingAliveClientQuery, daemon=True)
 		else:
 			disconnected = True
 			print("connect to a teamspeak server first or set a server address in the config.json file")
@@ -105,7 +107,7 @@ def readData():
 def startTeamspeakThread(teamspeakPath):
 	if len(teamspeakPath) > 0:
 		print("starting teamspeak in: " + teamspeakPath)
-		bot.startNewThread(target=startTeamspeak, args=(teamspeakPath,))
+		bot.startNewThread(target=startTeamspeak, args=(teamspeakPath,), daemon=True)
 		for i in range(100):
 			time.sleep(0.2)
 			try:
@@ -133,6 +135,12 @@ def startCheckingForTeamspeakCommand():
 			command = cli.stringToCommand(string)
 			with bot.lock:
 				cli.handleCommand(command, prefix=Prefixes.Teamspeak)
+
+def startKeepingAliveClientQuery():
+	while bot.running:
+		time.sleep(200)
+		with bot.clientQueryLock:
+			clientQuery.sendKeepAlive()
 
 def handleTeamspeakCommand(event):
 	try:
@@ -179,8 +187,9 @@ def sendToChannel(string):
 def comeOver(event):
 	try:
 		clientID = event[0]["invokerid"]
-		channelID = clientQuery.getChannelID(clientID)
-		clientQuery.moveToChannel(channelID)
+		with bot.clientQueryLock:
+			channelID = clientQuery.getChannelID(clientID)
+			clientQuery.moveToChannel(channelID)
 	except Exception as e:
 		print("couldn't come over")
 		print(e)
@@ -265,6 +274,9 @@ class ClientQuery:
 		except Exception as e:
 			print("couldn't get channel id")
 			raise e
+
+	def sendKeepAlive(self, message):
+		self.mainConnection.send_keepalive()
 
 	def setNickname(self, nickname):
 		try:
