@@ -38,6 +38,7 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	global debug
 
 	if not createVlcPlayer():
+		print("error while connecting to vlc exiting")
 		exit()
 
 	readData()
