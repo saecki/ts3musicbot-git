@@ -111,12 +111,13 @@ def startTeamspeakThread(teamspeakPath):
 		for i in range(100):
 			time.sleep(0.2)
 			try:
-				tn = telnetlib.Telnet(HOST, 25639)
+				time.sleep(10)
+				#tn = telnetlib.Telnet(HOST, 25639)
 			except:
 				print("starting...")
 			else:
-				tn.close()
-				del tn
+				#tn.close()
+				#del tn
 				print("started teamspeak")
 				return True
 		print("starting teamspeak failed")
@@ -167,7 +168,7 @@ def updateBot():
 		with bot.clientQueryLock:
 			clientQuery.setNickname(NICKNAME)
 	except:
-		print("couldn't update nickname")
+		pass
 
 def updateDescription():
 	global lastDescription
