@@ -11,9 +11,10 @@ class JSONFields:
 
 class Modules:
 	CLI 			= "c"
-	WebInterface 	= "w"
 	Teamspeak	 	= "t"
+	ZMQ				= "z"
 	Debug			= "d"
+	SILENT			= "s"
 
 class Prefixes:
 	Teamspeak 	= ("!", ":")
@@ -42,6 +43,7 @@ class Commands:
 	Status			= ("status", 		"sa")
 	Playlist 		= ("playlist", 		"pll")
 	ComeOver		= ("comeover", 		"co")
+	Exit			= ("exit",			"ex")
 
 class Args:
 	Create 	= ("create:", 	"cr:")

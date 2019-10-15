@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import telnetlib
 import time
 import ts3
@@ -27,6 +28,7 @@ def run():
 	global clientQuery
 	global disconnected
 
+	print("starting teamspeak module")
 	readData()
 	startTeamspeakThread(TEAMSPEAKPATH)
 	clientQuery = ClientQuery(HOST, APIKEY)
@@ -46,6 +48,7 @@ def run():
 			disconnected = True
 			print("connect to a teamspeak server first or set a server address in the config.json file")
 			print("running without teamspeak interface")
+	print("started teamspeak module")
 
 def update():
 	if not disconnected:
@@ -125,19 +128,31 @@ def startTeamspeakThread(teamspeakPath):
 
 
 def startTeamspeak(teamspeakPath):
-	subprocess.call(teamspeakPath)
+	out = sys.stdout
+	if bot.silent:
+		out = open(FileSystem.getLogFilePath(), "a")
+
+	subprocess.call(teamspeakPath, stdout=out, stderr=out)
 
 def startCheckingForTeamspeakCommand():
+	if bot.silent:
+		sys.stdout = open(FileSystem.getLogFilePath(), "a")
+		sys.stderr = open(FileSystem.getLogFilePath(), "a")
+
 	clientQuery.registerForTextEvents()
 
 	while bot.running:
 		string = clientQuery.listenForTextEvents()
 		if string != None:
-			command = cli.stringToCommand(string)
+			command = cli.parseCommand(string)
 			with bot.lock:
 				cli.handleCommand(command, prefix=Prefixes.Teamspeak)
 
 def startKeepingAliveClientQuery():
+	if bot.silent:
+		sys.stdout = open(FileSystem.getLogFilePath(), "a")
+		sys.stderr = open(FileSystem.getLogFilePath(), "a")
+
 	while bot.running:
 		time.sleep(200)
 		with bot.clientQueryLock:
@@ -276,7 +291,7 @@ class ClientQuery:
 			print("couldn't get channel id")
 			raise e
 
-	def sendKeepAlive(self, message):
+	def sendKeepAlive(self):
 		self.mainConnection.send_keepalive()
 
 	def setNickname(self, nickname):
@@ -364,7 +379,7 @@ class ClientQuery:
 			invokerID = event[0]["invokerid"]
 			msg = event[0]["msg"]
 			if bot.debug:
-				print("invokerid: " + invokerID + " msg: " + msg)
+				print("received teamspeak message invokerid: " + invokerID + " msg: " + msg)
 				if not handleTeamspeakCommand(event):
 					return msg
 			elif invokerID != clientID:

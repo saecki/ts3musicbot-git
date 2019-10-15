@@ -1,3 +1,4 @@
+import sys
 import time
 import urllib.request
 import vlc
@@ -16,7 +17,9 @@ from common.constants import Commands
 from common.constants import Prefixes
 
 def run():
+	print("starting cli")
 	bot.addThread(target=startCheckingForTerminalCommand, daemon=True)
+	print("started cli")
 
 def update():
 	pass
@@ -29,11 +32,13 @@ def report(string):
 #
 
 def startCheckingForTerminalCommand():
+	if bot.silent:
+		sys.stdout = open(FileSystem.getLogFilePath(), "a")
+		sys.stderr = open(FileSystem.getLogFilePath(), "a")
+
 	while bot.running:
 		string = input()
-		if string == "exit":
-			bot.quit()
-		command = stringToCommand(string)
+		command = parseCommand(string)
 		with bot.lock:
 			handleCommand(command)
 
@@ -48,6 +53,10 @@ def handleCommand(command, prefix=("",)):
 			if command.name.startswith(p):
 				startswithprefix = p
 				break
+
+		if startswithprefix == "":
+			if command.name in Commands.Exit:
+				bot.quit()
 
 		if startswithprefix != None:
 			command.name = command.name[len(startswithprefix):]
@@ -100,7 +109,7 @@ def handleCommand(command, prefix=("",)):
 	else:
 		bot.report("wow that's impressive")
 
-def stringToCommand(string):
+def parseCommand(string):
 
 	if type(string) == str:
 		string = string.rstrip()

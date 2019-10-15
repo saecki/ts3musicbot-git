@@ -41,6 +41,14 @@ class FileSystem:
 
 		return path
 
+	def getLogFilePath():
+		path = FileSystem.getDataFolderPath()
+		if len(path) > 0:
+			path += os.path.sep
+		path += "log"
+
+		return path
+
 class Command:
 
 	def __init__(self, name):

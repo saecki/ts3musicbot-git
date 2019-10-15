@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import pafy
 import random
 import threading
@@ -14,6 +15,7 @@ from common.constants import JSONFields
 from common.constants import Modules
 from modules import cli
 from modules import teamspeak
+from modules import zmqserver
 
 modules = []
 threads = []
@@ -21,6 +23,7 @@ lock = None
 clientQueryLock = None
 running = True
 debug = False
+silent = False
 
 Instance = None
 player = None
@@ -36,6 +39,12 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	global clientQueryLock
 	global terminalOnly
 	global debug
+	global silent
+
+	if Modules.SILENT in args:
+		silent = True
+		sys.stdout = open(FileSystem.getLogFilePath(), "a")
+		sys.stderr = open(FileSystem.getLogFilePath(), "a")
 
 	if not createVlcPlayer():
 		print("error while connecting to vlc exiting")
@@ -55,10 +64,13 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 	if Modules.Teamspeak in args:
 		modules.append(teamspeak)
 
+	if Modules.ZMQ in args:
+		modules.append(zmqserver)
+
 	if Modules.Debug in args:
 		print("running in debug mode")
 		debug = True
-
+ 
 	for m in modules:
 		m.run()
 

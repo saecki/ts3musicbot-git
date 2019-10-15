@@ -3,3 +3,4 @@ python_vlc==3.0.7110
 pafy==0.5.4
 youtube-dl==2019.9.12.1
 beautifulsoup4==4.8.0
+pyzmq==18.1.0
