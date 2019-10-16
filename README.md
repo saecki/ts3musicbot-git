@@ -78,7 +78,7 @@ An example command written on teamspeak could look like this:
 | adding the current song to a playlist                       | ```Prefix```playlist add: currentsong to: ```name``` |
 | removing a song at a certain index from a playlist          | ```Prefix```playlist remove: ```index``` from: ```name``` |
 | adding the playlist to the queue                            | ```Prefix```playlist queue: ```name``` |
-| replacing the queue with a playlist                         | ```Prefix```playlist queue: ```name``` replace |
+| replacing the queue with a playlist                         | ```Prefix```playlist play: ```name``` |
 | shuffling a playlist                                        | ```Prefix```playlist shuffle: ```name``` |
 | clearing a playlist                                         | ```Prefix```playlist clear: ```name``` |
 | listing all playlists                                       | ```Prefix```playlist list: all |
