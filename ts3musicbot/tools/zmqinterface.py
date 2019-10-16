@@ -2,30 +2,34 @@ import threading
 import zmq
 
 running = True
-socket = None
+publisher = None
+subscriber = None
 
 def run():
-	global socket
+	global subscriber
+	global publisher
 
 	print("connecting to zmq server")
 	context = zmq.Context()
-	socket = context.socket(zmq.REQ)
-	socket.connect("tcp://localhost:5555")
+	subscriber = context.socket(zmq.SUB)
+	subscriber.setsockopt(zmq.SUBSCRIBE, b"")
+	subscriber.connect("tcp://127.0.0.1:5557")
+	publisher = context.socket(zmq.PUSH)
+	publisher.connect("tcp://127.0.0.1:5558")
 	print("connected to zmq server")
 	
-	#t = threading.Thread(target=startReceivingThread)
-	#t.setDaemon(True)
-	#t.start();
+	t = threading.Thread(target=startReceivingThread)
+	t.setDaemon(True)
+	t.start();
 
 	while running:
 		msg = input()
-		socket.send(msg.encode("utf-8"))
-		msg = socket.recv()
-		print(msg.decode("utf-8"))
-
+		publisher.send(msg.encode("utf-8"))
+	
 def startReceivingThread():
 	while running:
-		msg = socket.recv()
-		print(msg)
+		msg = subscriber.recv()
+		string = msg.decode("utf-8")
+		print(string)
 
 run()

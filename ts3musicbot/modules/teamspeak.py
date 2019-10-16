@@ -132,7 +132,7 @@ def startTeamspeak(teamspeakPath):
 	if bot.silent:
 		out = open(FileSystem.getLogFilePath(), "a")
 
-	subprocess.call(teamspeakPath, stdout=out, stderr=out)
+	subprocess.call(teamspeakPath,shell=True, stdout=out, stderr=out)
 
 def startCheckingForTeamspeakCommand():
 	if bot.silent:
