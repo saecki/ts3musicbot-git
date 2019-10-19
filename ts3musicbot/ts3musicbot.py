@@ -561,6 +561,16 @@ def playlistAdd(song, playlist):
 	playlist.addSong(song)
 	report("added " + song.title + " to " + playlist.name)
 
+def playlistAddPlaylist(playlist, addedPlaylist)
+	for s in addedPlaylist.songs:
+		playlist.addSong(s)
+	report("added " + addedPlaylist + " to " + playlist.name)
+
+def playlistAddQueue(playlist):
+	for s in songQueue:
+		playlist.addSong(s)
+	report("added the queue to " + playlist.name)
+
 def playlistRemove(index, playlist):
 	index = getNumberBetween(index, 0, len(songQueue) - 1)
 	title = playlist.songs[index].title

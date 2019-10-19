@@ -63,7 +63,7 @@ class ArgValues:
 	All 	= 		("all", 		"a")
 	Stop 	= 		("stop", 		"s")
 	Queue 	= 		("queue", 		"q")
-	CurrentSong =	("currntsong", 	"cs")
+	CurrentSong =	("currentsong", 	"cs")
 
 class ForbiddenNames:
 	fields = (
