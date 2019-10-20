@@ -85,6 +85,7 @@ An example command written on teamspeak could look like this:
 | listing a playlist                                          | ```Prefix```playlist list: ```name``` |
 |                                                             |
 | make the bot join your channel                              | ```Prefix```comeover |
+
 \* songs can be youtube urls or just text which will be used to search a song on youtube
 
 ### Short Forms
