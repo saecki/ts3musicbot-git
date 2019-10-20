@@ -12,6 +12,7 @@ A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
   - [Examples](#examples)
     - [Teamspeak](#teamspeak)
     - [Terminal](#terminal)
+- [Startup Parameters](#startup-parameters)
 - [Dependencies](#dependencies)
 - [Setup](#setup)
 
@@ -177,6 +178,20 @@ An example command written on teamspeak could look like this:
 - **Queue the playlist myplaylist:**  
 
   ```playlist queue: myplaylist```  
+
+## Startup Parameters
+The bots functionality is provided by modules which can be enabled by startup parameters.  
+These have to be specified after the main.py file when executing.  
+An example could look like this:  
+```python3 main.py ctz```
+
+| Module    | Parameter | Function |
+| ---       | ---       | --- |
+| CLI       | c         | provides a direct command line interface to control the bot directly from the terminal |
+| Teamspeak | t         | provides a command line interface through teamspeak chat messages |
+| ZMQ       | z         | provides a command line interface through a zmq server which can be locally accessed through the zmqinterface.py script in the tools dir |
+| Debug     | d         | provides debug functionality and logs |
+| Silent    | s         | writes all text output to a log file |
 
 ## Dependencies
 - [Python 3.7](https://www.python.org/downloads/)
