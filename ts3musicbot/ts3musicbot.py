@@ -561,10 +561,10 @@ def playlistAdd(song, playlist):
 	playlist.addSong(song)
 	report("added " + song.title + " to " + playlist.name)
 
-def playlistAddPlaylist(playlist, addedPlaylist)
+def playlistAddPlaylist(addedPlaylist, playlist):
 	for s in addedPlaylist.songs:
 		playlist.addSong(s)
-	report("added " + addedPlaylist + " to " + playlist.name)
+	report("added " + addedPlaylist.name + " to " + playlist.name)
 
 def playlistAddQueue(playlist):
 	for s in songQueue:

@@ -247,6 +247,7 @@ def getYoutubeSongFromPlayCommand(command):
 	return None
 
 def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
+	string = getCommandArgsAsString(args, startWithArgVal=True, till=tillArg)
 	url = args[0].value
 	if isYoutubeURL(url):
 		title = getTitleFromYoutubeURL(url)
@@ -254,10 +255,9 @@ def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
 		return song
 	elif args[0].value in ArgValues.CurrentSong:
 		return bot.getCurrentSong()
-	elif getNumberFromString(args[0].value) != None:
+	elif getNumberFromString(string) != None:
 		return bot.getSong(int(getNumberFromString(args[0].value)))
 	elif tillArg in [a.name for a in args]:
-		string = getCommandArgsAsString(args, startWithArgVal=True, till=tillArg)
 		song = getYoutubeSongFromString(string)
 		
 		if song != None:
@@ -567,7 +567,7 @@ def playlistAdd(args):
 		if toArg != None and toArg.value != None:
 			p = bot.getPlaylist(toArg.value)
 			if p != None:
-				playlistAdd(p, args)
+				_playlistAdd(p, args)
 			else:
 				bot.report("playlist not found")
 		else:
@@ -575,7 +575,7 @@ def playlistAdd(args):
 	else:
 		bot.report("not enough Args")
 
-def playlistAdd(playlist, args):
+def _playlistAdd(playlist, args):
 	name = args[0].value
 	if name in ArgValues.Queue:
 		bot.playlistAddQueue(playlist)
@@ -587,12 +587,12 @@ def playlistAdd(playlist, args):
 			addedPlaylist = p
 			break
 	if addedPlaylist != None:
-		bot.playlistAddPlaylist(playlists, addedPlaylist)
+		bot.playlistAddPlaylist(addedPlaylist, playlist)
 		return
 
 	song = getYoutubeSongFromPlaylistCommand(args, tillArg=Args.To)
 	if song != None:
-		bot.playlistAdd(song, p)
+		bot.playlistAdd(song, playlist)
 
 def playlistRemove(args):
 	if len(args) > 1:

@@ -30,14 +30,12 @@ An example command written on teamspeak could look like this:
 ```!command arg1: value1 arg2 arg3: value3```
 
 ### Prefixes
-| Plattform                                          | Prefix |
-| ---                                                | --- |
-| Teamspeak                                          | ! or : |
-| Terminal                                           | ```None``` |
+| Plattform | Prefix |
+| ---       | --- |
+| Teamspeak | ! or : |
+| Terminal  | ```None``` |
 
-### Commands
-\* songs can be youtube urls or just text which will be used to search a song on youtube   
-
+### Commands 
 | Function                                                    | Command |
 | ---                                                         | --- |
 | adding a song to the queue                                  | ```Prefix```play ```song*``` |
@@ -71,11 +69,13 @@ An example command written on teamspeak could look like this:
 |                                                             |
 | creating a playlist                                         | ```Prefix```playlist create: ```name``` |
 | creating a playlist from the queue                          | ```Prefix```playlist create: ```name``` from: queue |
-| creating a playlist from another playlist                   | ```Prefix```playlist create: ```name``` from: ```otherplaylist``` |
+| creating a playlist from another playlist                   | ```Prefix```playlist create: ```name``` from: ```playlist``` |
 | deleteting a playlist                                       | ```Prefix```playlist delete: ```name``` |
 | adding a song to a playlist                                 | ```Prefix```playlist add: ```song*``` to: ```name``` |
 | adding a song at a certain index of the queue to a playlist | ```Prefix```playlist add: ```index``` to: ```name``` |
 | adding the current song to a playlist                       | ```Prefix```playlist add: currentsong to: ```name``` |
+| adding the queue to a playlist                              | ```Prefix```playlist add: queue to: ```name``` |
+| adding a playlist to another playlist                       | ```Prefix```playlist add: ```playlist``` to: ```name``` |
 | removing a song at a certain index from a playlist          | ```Prefix```playlist remove: ```index``` from: ```name``` |
 | adding the playlist to the queue                            | ```Prefix```playlist queue: ```name``` |
 | replacing the queue with a playlist                         | ```Prefix```playlist play: ```name``` |
@@ -85,6 +85,7 @@ An example command written on teamspeak could look like this:
 | listing a playlist                                          | ```Prefix```playlist list: ```name``` |
 |                                                             |
 | make the bot join your channel                              | ```Prefix```comeover |
+\* songs can be youtube urls or just text which will be used to search a song on youtube
 
 ### Short Forms
 | Command       | Short Form |
