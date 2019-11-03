@@ -46,6 +46,8 @@ def run(args= Modules.Teamspeak + Modules.CLI):
 		sys.stdout = open(FileSystem.getLogFilePath(), "a")
 		sys.stderr = open(FileSystem.getLogFilePath(), "a")
 
+	print("####################\nstarting...")
+
 	if not createVlcPlayer():
 		print("error while connecting to vlc exiting")
 		exit()
