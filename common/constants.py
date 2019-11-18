@@ -9,6 +9,7 @@ class JSONFields:
 	ServerAddress	= "serveraddress"
 	TeamspeakPath	= "teamspeakpath"
 
+
 class Modules:
 	CLI 			= "c"
 	Teamspeak	 	= "t"
@@ -16,8 +17,10 @@ class Modules:
 	Debug			= "d"
 	SILENT			= "s"
 
+
 class Prefixes:
 	Teamspeak 	= ("!", ":")
+
 
 class Commands:
 	Play         	= ("play", 			"pl")
@@ -45,6 +48,7 @@ class Commands:
 	ComeOver		= ("comeover", 		"co")
 	Exit			= ("exit",			"ex")
 
+
 class Args:
 	Create 	= ("create:", 	"cr:")
 	Delete 	= ("delete:", 	"dl:")
@@ -57,7 +61,8 @@ class Args:
 	List 	= ("list:", 	"ls:")
 
 	From 	= ("from:", 	"fr:")
-	To 		= ("to:")
+	To 		= ("to:",)
+
 
 class ArgValues:
 	All 	= 		("all", 		"a")
@@ -65,9 +70,10 @@ class ArgValues:
 	Queue 	= 		("queue", 		"q")
 	CurrentSong =	("currentsong", 	"cs")
 
+
 class ForbiddenNames:
 	fields = (
 		ArgValues.Queue,
 		ArgValues.All,
 		ArgValues.Stop,
-		)
+	)
