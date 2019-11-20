@@ -5,6 +5,7 @@ from sys import platform
 
 class FileSystem:
 
+    @staticmethod
     def getDataFolderPath():
         if platform == "linux" or platform == "linux2":
             path = os.getenv("HOME")
@@ -26,6 +27,7 @@ class FileSystem:
 
         return path
 
+    @staticmethod
     def getDataFilePath():
         path = FileSystem.getDataFolderPath()
         if len(path) > 0:
@@ -34,6 +36,7 @@ class FileSystem:
 
         return path
 
+    @staticmethod
     def getConfigFilePath():
         path = FileSystem.getDataFolderPath()
         if len(path) > 0:

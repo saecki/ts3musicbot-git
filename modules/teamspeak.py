@@ -6,7 +6,7 @@ import time
 import ts3
 
 import ts3musicbot as bot
-from common.classproperties import FileSystem
+from common.classes import FileSystem
 from common.constants import Commands, JSONFields, Prefixes
 from modules import cli
 

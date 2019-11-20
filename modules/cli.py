@@ -5,7 +5,7 @@ import vlc
 from bs4 import BeautifulSoup
 
 import ts3musicbot as bot
-from common.classproperties import Argument, FileSystem, Song, Command
+from common.classes import Argument, FileSystem, Song, Command
 from common.constants import Args, ArgValues, Commands
 
 

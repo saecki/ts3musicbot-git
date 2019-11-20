@@ -7,7 +7,7 @@ import threading
 import time
 import vlc
 
-from common.classproperties import Playlist, FileSystem, Song
+from common.classes import Playlist, FileSystem, Song
 from common.constants import ForbiddenNames, JSONFields, Modules
 from modules import cli, teamspeak, zmqserver
 
