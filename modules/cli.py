@@ -261,13 +261,19 @@ def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
         return bot.getCurrentSong()
     elif getNumberFromString(string) != None:
         return bot.getSong(int(getNumberFromString(args[0].value)))
-    elif tillArg in [a.name for a in args]:
-        song = getYoutubeSongFromString(string)
+    else:
+        song = None
+        for a in tillArg:
+            if a in [a.name for a in args]:
+                song = getYoutubeSongFromString(string)
+                break
 
         if song != None:
             return song
         else:
             bot.report("couldn't find any youtube song")
+
+    bot.report("well ... respect")
     return None
 
 
