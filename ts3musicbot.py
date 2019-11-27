@@ -165,11 +165,12 @@ def getNumberBetween(number, min, max):
 #
 
 def writeData():
-    data = {}
-    data[JSONFields.Playlists] = []
-    data[JSONFields.SongQueue] = []
-    data[JSONFields.Index] = index
-    data[JSONFields.RepeatSong] = repeatSong
+    data = {
+        JSONFields.Playlists: [],
+        JSONFields.SongQueue: [],
+        JSONFields.Index: index,
+        JSONFields.RepeatSong: repeatSong
+    }
 
     for p in playlists:
         data[JSONFields.Playlists].append(p.toJSON())
@@ -206,10 +207,11 @@ def readData():
 
             try:
                 index = data[JSONFields.Index]
-                if index >= len(songQueue):
-                    index = len(songQueue - 1)
             except:
                 print("couldn't read index")
+            else:
+                if index >= len(songQueue) and index != 0:
+                    index = len(songQueue) - 1
 
             try:
                 repeatSong = data[JSONFields.RepeatSong]
