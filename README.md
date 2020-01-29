@@ -4,14 +4,14 @@ A musicbot for Teamspeak which uses VLC to directly stream audio from YouTube.
 
 ## Table of Content
 - [Command Line Interface](#command-line-interface)
-  - [Usage](#usage)
-  - [Syntax](#syntax)
-  - [Prefixes](#prefixes)
-  - [Commands](#commands)
-  - [Short Forms](#short-forms)
-  - [Examples](#examples)
-    - [Teamspeak](#teamspeak)
-    - [Terminal](#terminal)
+    - [Usage](#usage)
+    - [Syntax](#syntax)
+    - [Prefixes](#prefixes)
+    - [Commands](#commands)
+    - [Short Forms](#short-forms)
+    - [Examples](#examples)
+        - [Teamspeak](#teamspeak)
+        - [Terminal](#terminal)
 - [Startup Parameters](#startup-parameters)
 - [Dependencies](#dependencies)
 - [Setup](#setup)
@@ -195,9 +195,9 @@ An example could look like this:
 
 ## Dependencies
 - [Python 3.7](https://www.python.org/downloads/)
-   - [requirements.txt](https://github.com/Saecki/ts3musicbot-git/blob/master/ts3musicbot/requirements.txt)
+    - [requirements.txt](https://github.com/Saecki/ts3musicbot-git/blob/master/requirements.txt)
 - [TeamSpeak 3 client](https://www.teamspeak.com/en/downloads/)
-   - [ClientQuery plugin](https://www.myteamspeak.com/addons/943dd816-7ef2-48d7-82b8-d60c3b9b10b3)
+    - [ClientQuery plugin](https://www.myteamspeak.com/addons/943dd816-7ef2-48d7-82b8-d60c3b9b10b3)
 - [VLC media player 3.0](https://www.videolan.org/vlc/)
 - [VB-CABLE](https://www.vb-audio.com/Cable/) (or another app for routing audio as an input to teamspeak)
 
