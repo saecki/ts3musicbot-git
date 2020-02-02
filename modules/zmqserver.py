@@ -18,7 +18,7 @@ def run():
     collector = context.socket(zmq.PULL)
     collector.bind("tcp://127.0.0.1:5558")
 
-    bot.addThread(target=startCollector, daemon=True)
+    bot.add_thread(target=start_collector, daemon=True)
     print("started zmq server")
 
 
@@ -31,7 +31,7 @@ def report(string):
     publisher.send(msg)
 
 
-def startCollector():
+def start_collector():
     while bot.running:
         msg = collector.recv()
         string = msg.decode("utf-8")
@@ -40,4 +40,4 @@ def startCollector():
             print("received zmq message msg: " + string)
 
         with bot.lock:
-            cli.handleCommand(cli.parseCommand(string))
+            cli.handle_command(cli.parse_command(string))

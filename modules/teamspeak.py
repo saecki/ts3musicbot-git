@@ -2,47 +2,45 @@ import json
 import subprocess
 import sys
 import time
-
 import ts3
 
 import ts3musicbot as bot
-from common.classes import FileSystem
+
+from common.classes import FileSystem, JSONData
 from common.constants import Commands, JSONFields, Prefixes
 from modules import cli
 
-APIKEY = ""
-NICKNAME = ""
-SERVERADDRESS = ""
-HOST = "localhost"
-TEAMSPEAKPATH = ""
+api_key = ""
+nickname = ""
+server_address = ""
+host = "localhost"
+team_speak_path = ""
 
-clientQuery = None
-disconnected = False
-lastDescription = None
+client_query = None
+disconnected = True
+last_description = None
 
 
 def run():
-    global clientQuery
+    global client_query
     global disconnected
 
     print("starting teamspeak module")
-    readData()
-    startTeamspeakThread(TEAMSPEAKPATH)
-    clientQuery = ClientQuery(HOST, APIKEY)
-    nicknameIndex = 0
+    read_data()
+    start_teamspeak_thread(team_speak_path)
+    client_query = ClientQuery(host, api_key)
 
     if not disconnected:
-        if len(SERVERADDRESS) > 0:
-            if clientQuery.tryConnecting(SERVERADDRESS):
-                updateBot()
-                bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
-                bot.addThread(target=startKeepingAliveClientQuery, daemon=True)
-        elif clientQuery.isConnected():
-            updateBot()
-            bot.addThread(target=startCheckingForTeamspeakCommand, daemon=True)
-            bot.addThread(target=startKeepingAliveClientQuery, daemon=True)
+        if client_query.is_connected():
+            update_bot()
+            bot.add_thread(target=start_checking_for_teamspeak_command, daemon=True)
+            bot.add_thread(target=start_keeping_alive_client_query, daemon=True)
+        elif len(server_address) > 0:
+            if client_query.try_connecting(server_address):
+                update_bot()
+                bot.add_thread(target=start_checking_for_teamspeak_command, daemon=True)
+                bot.add_thread(target=start_keeping_alive_client_query, daemon=True)
         else:
-            disconnected = True
             print("connect to a teamspeak server first or set a server address in the config.json file")
             print("running without teamspeak interface")
     print("started teamspeak module")
@@ -50,132 +48,126 @@ def run():
 
 def update():
     if not disconnected:
-        updateDescription()
+        update_description()
 
 
 def report(string):
     if not disconnected:
-        sendToChannel(string)
+        send_to_channel(string)
 
 
-def readData():
-    global APIKEY
-    global NICKNAME
-    global SERVERADDRESS
-    global TEAMSPEAKPATH
+def read_data():
+    global api_key
+    global nickname
+    global server_address
+    global team_speak_path
 
     try:
-        with open(FileSystem.getConfigFilePath()) as jsonfile:
-            data = json.load(jsonfile)
+        json_file = open(FileSystem.get_config_file_path())
+        data = json.load(json_file)
 
-            try:
-                APIKEY = data[JSONFields.ApiKey]
-            except:
-                print("couldn't read apikey")
+        with JSONData.read(data, JSONFields.ApiKey) as json_field:
+            api_key = json_field
 
-            try:
-                NICKNAME = data[JSONFields.Nickname]
-            except:
-                print("couldn't read nickname")
+        with JSONData.read(data, JSONFields.Nickname) as json_field:
+            nickname = json_field
 
-            try:
-                SERVERADDRESS = data[JSONFields.ServerAddress]
-            except Exception as e:
-                print("couldn't read serveradress")
+        with JSONData.read(data, JSONFields.ServerAddress) as json_field:
+            server_address = json_field
 
-            try:
-                TEAMSPEAKPATH = data[JSONFields.TeamspeakPath]
-            except Exception as e:
-                print("couldn't read teamspeakpath")
+        with JSONData.read(data, JSONFields.TeamSpeakPath) as json_field:
+            team_speak_path = json_field
 
         return True
+
     except:
         print("couldn't read config file")
-        print("trying to create a ts3clientquery config file")
+        print("trying to create a ts3 clientquery config file")
         try:
-            with open(FileSystem.getConfigFilePath(), "w") as jsonfile:
-                data = {}
-                data[JSONFields.ApiKey] = "YOURAPIKEY"
-                data[JSONFields.Nickname] = "Musicbot"
-                data[JSONFields.ServerAddress] = ""
-                data[JSONFields.TeamspeakPath] = ""
+            json_file = open(FileSystem.get_config_file_path(), "w")
+            data = {
+                JSONFields.ApiKey: "<YOURAPIKEY>",
+                JSONFields.Nickname: "Musicbot",
+                JSONFields.ServerAddress: "",
+                JSONFields.TeamSpeakPath: ""
+            }
 
-                json.dump(data, jsonfile, indent=4)
+            json.dump(data, json_file, indent=4)
 
-                print(
-                    "created a config.json file in " + FileSystem.getDataFolderPath() + "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: tools - options - addons - clientquery - settings. optionally you can change the nickname and specify a default server address and a teamspeak path to automatically start teamspeak.")
+            print(
+                "created a config.json file in " + FileSystem.get_data_folder_path() +
+                "you'll have to enter a ts3clientquery api key which can be found in your teamspeak client at: "
+                "tools - options - addons - clientquery - settings. optionally you can change the nickname and "
+                "specify a default server address and a teamspeak path to automatically start teamspeak.")
         except FileExistsError:
             print("couldn't create config file")
     return False
 
 
-def startTeamspeakThread(teamspeakPath):
-    if len(teamspeakPath) > 0:
-        print("starting teamspeak in: " + teamspeakPath)
-        bot.startNewThread(target=startTeamspeak, args=(teamspeakPath,), daemon=True)
+def start_teamspeak_thread(team_speak_path):
+    if len(team_speak_path) > 0:
+        print("starting teamspeak in: " + team_speak_path)
+        bot.start_new_thread(target=start_teamspeak, args=(team_speak_path,), daemon=True)
         for i in range(100):
             time.sleep(0.2)
             try:
                 time.sleep(10)
-            # tn = telnetlib.Telnet(HOST, 25639)
             except:
                 print("starting...")
             else:
-                # tn.close()
-                # del tn
                 print("started teamspeak")
                 return True
         print("starting teamspeak failed")
         return False
 
 
-def startTeamspeak(teamspeakPath):
+def start_teamspeak(team_speak_path):
     out = sys.stdout
     if bot.silent:
-        out = open(FileSystem.getLogFilePath(), "a")
+        out = open(FileSystem.get_log_file_path(), "a")
 
-    subprocess.call(teamspeakPath, shell=True, stdout=out, stderr=out)
+    subprocess.call(team_speak_path, shell=True, stdout=out, stderr=out)
 
 
-def startCheckingForTeamspeakCommand():
+def start_checking_for_teamspeak_command():
     if bot.silent:
-        sys.stdout = open(FileSystem.getLogFilePath(), "a")
-        sys.stderr = open(FileSystem.getLogFilePath(), "a")
+        sys.stdout = open(FileSystem.get_log_file_path(), "a")
+        sys.stderr = open(FileSystem.get_log_file_path(), "a")
 
-    clientQuery.registerForTextEvents()
+    client_query.registerForTextEvents()
 
     while bot.running:
-        string = clientQuery.listenForTextEvents()
-        if string != None:
-            command = cli.parseCommand(string)
+        string = client_query.listenForTextEvents()
+        if string is not None:
+            command = cli.parse_command(string)
             with bot.lock:
-                cli.handleCommand(command, prefix=Prefixes.Teamspeak)
+                cli.handle_command(command, prefix=Prefixes.TeamSpeak)
 
 
-def startKeepingAliveClientQuery():
+def start_keeping_alive_client_query():
     if bot.silent:
-        sys.stdout = open(FileSystem.getLogFilePath(), "a")
-        sys.stderr = open(FileSystem.getLogFilePath(), "a")
+        sys.stdout = open(FileSystem.get_log_file_path(), "a")
+        sys.stderr = open(FileSystem.get_log_file_path(), "a")
 
     while bot.running:
         time.sleep(200)
         with bot.clientQueryLock:
-            clientQuery.sendKeepAlive()
+            client_query.sendKeepAlive()
 
 
-def handleTeamspeakCommand(event):
+def handle_teamspeak_command(event):
     try:
         msg = event[0]["msg"]
         startswithprefix = None
-        for p in Prefixes.Teamspeak:
+        for p in Prefixes.TeamSpeak:
             if msg.startswith(p):
                 startswithprefix = p
                 break
 
-        if startswithprefix != None:
+        if startswithprefix is not None:
             command = msg[len(startswithprefix):]
             if command in Commands.ComeOver:
-                comeOver(event)
+                come_over(event)
             else:
                 return False
             return True
@@ -184,36 +176,36 @@ def handleTeamspeakCommand(event):
         return False
 
 
-def updateBot():
+def update_bot():
     try:
         with bot.clientQueryLock:
-            clientQuery.setNickname(NICKNAME)
+            client_query.setNickname(nickname)
     except:
         pass
 
 
-def updateDescription():
-    global lastDescription
+def update_description():
+    global last_description
 
-    msg = cli.getPlaybackInfo()
+    msg = cli.get_playback_info()
 
-    if not msg == lastDescription:
+    if not msg == last_description:
         with bot.clientQueryLock:
-            clientQuery.setDescription(msg)
-        lastDescription = msg
+            client_query.set_description(msg)
+        last_description = msg
 
 
-def sendToChannel(string):
+def send_to_channel(string):
     with bot.clientQueryLock:
-        clientQuery.sendMessageToCurrentChannel(string)
+        client_query.send_message_to_current_channel(string)
 
 
-def comeOver(event):
+def come_over(event):
     try:
-        clientID = event[0]["invokerid"]
+        client_id = event[0]["invokerid"]
         with bot.clientQueryLock:
-            channelID = clientQuery.getChannelID(clientID)
-            clientQuery.moveToChannel(channelID)
+            channel_id = client_query.getChannelID(client_id)
+            client_query.move_to_channel(channel_id)
     except Exception as e:
         print("couldn't come over")
         print(e)
@@ -221,22 +213,24 @@ def comeOver(event):
 
 class ClientQuery:
 
-    def __init__(self, HOST, apikey):
+    def __init__(self, host, api_key):
         global disconnected
 
-        self.host = HOST
-        self.mainConnection = self.createQuery(HOST, apikey)
-        self.listeningConnection = self.createQuery(HOST, apikey)
+        self.host = host
+        self.main_connection = ClientQuery.create_query(host, api_key)
+        self.listening_connection = ClientQuery.create_query(host, api_key)
 
-        if self.mainConnection == None or self.listeningConnection == None:
-            disconnected = True
+        if self.main_connection is None or self.listening_connection is None:
             print("most likely the teamspeak client isn't running or the clientquery apikey is wrong")
             print("running without teamspeak interface")
+        else:
+            disconnected = False
 
-    def createQuery(self, HOST, apikey):
+    @staticmethod
+    def create_query(host, api_key):
         try:
-            ts3conn = ts3.query.TS3ClientConnection(HOST)
-            ts3conn.auth(apikey=apikey)
+            ts3conn = ts3.query.TS3ClientConnection(host)
+            ts3conn.auth(apikey=api_key)
             ts3conn.use()
             return ts3conn
         except Exception as e:
@@ -248,12 +242,12 @@ class ClientQuery:
     # connection
     #
 
-    def tryConnecting(self, address):
+    def try_connecting(self, address):
         print("connecting to " + address)
         self.connect(address)
         for i in range(50):
             time.sleep(0.2)
-            if self.isConnected():
+            if self.is_connected():
                 print("connected to " + address)
                 time.sleep(0.5)
                 return True
@@ -265,102 +259,100 @@ class ClientQuery:
     def connect(self, address):
         if len(address) > 0:
             try:
-                serverInfo = None
+                server_info = None
                 try:
-                    serverInfo = self.mainConnection.serverconnectinfo()
+                    server_info = self.main_connection.serverconnectinfo()
                 except:
-                    self.mainConnection.send("connect", {"address": address})
+                    self.main_connection.send("connect", {"address": address})
                 else:
-                    if serverInfo[0]["ip"] != address:
-                        self.mainConnection.send("connect", {"address": address})
+                    if server_info[0]["ip"] != address:
+                        self.main_connection.send("connect", {"address": address})
             except Exception as e:
                 print("couldn't connect to " + address)
                 raise e
 
-    def isConnected(self):
+    def is_connected(self):
         try:
-            serverInfo = self.mainConnection.serverconnectinfo()
+            server_info = self.main_connection.serverconnectinfo()
             return True
-        except Exception as e:
+        except:
             return False
 
-    def moveToChannel(self, channelID):
+    def move_to_channel(self, channel_id):
         try:
-            clientID = self.getClientID()
-            self.mainConnection.clientmove(cid=channelID, clid=clientID)
+            client_id = self.get_client_id()
+            self.main_connection.clientmove(cid=channel_id, clid=client_id)
         except Exception as e:
-            print("couldn't move to channel with id " + channelID)
+            print("couldn't move to channel with id " + channel_id)
             raise e
 
-    def sendMessageToCurrentChannel(self, message):
+    def send_message_to_current_channel(self, message):
         try:
-            channelID = self.getCurrentChannelID()
-            self.mainConnection.sendtextmessage(targetmode=2, target=channelID, msg=message)
+            channel_id = self.get_current_channel_id()
+            self.main_connection.sendtextmessage(targetmode=2, target=channel_id, msg=message)
         except Exception as e:
             print("couldn't get channel id")
             raise e
 
-    def sendKeepAlive(self):
-        self.mainConnection.send_keepalive()
+    def send_keep_alive(self):
+        self.main_connection.send_keepalive()
 
-    def setNickname(self, nickname):
+    def set_nickname(self, nickname):
         try:
-            clientID = self.getClientID()
-            clientVariables = self.mainConnection.clientvariable(clientID, "client_nickname")
-            clientnickname = clientVariables[0]["client_nickname"]
-            if nickname != clientnickname:
-                self.mainConnection.clientupdate(client_nickname=nickname)
+            client_id = self.get_client_id()
+            client_variables = self.main_connection.clientvariable(client_id, "client_nickname")
+            client_nickname = client_variables[0]["client_nickname"]
+            if nickname != client_nickname:
+                self.main_connection.clientupdate(client_nickname=nickname)
         except Exception as e:
             print("couldn't update teamspeak nickname")
             raise e
 
-    def setDescription(self, description):
+    def set_description(self, description):
         try:
-            clientDatabaseID = self.getDatabaseClientID()
-            self.mainConnection.clientdbedit(cldbid=clientDatabaseID, client_description=description)
+            client_database_id = self.get_database_client_id()
+            self.main_connection.clientdbedit(cldbid=client_database_id, client_description=description)
         except Exception as e:
             print("couldn't update teamspeak description")
             raise e
 
-    def getClientID(self):
+    def get_client_id(self):
         try:
-            clientInfo = self.mainConnection.whoami()
-            clientID = clientInfo[0]["clid"]
-            return clientID
+            client_info = self.main_connection.whoami()
+            client_id = client_info[0]["clid"]
+            return client_id
         except Exception as e:
             print("couldn't get client id")
             raise e
-        return None
 
-    def getCurrentChannelID(self):
+    def get_current_channel_id(self):
         try:
-            clientInfo = self.mainConnection.whoami()
-            channelID = clientInfo[0]["cid"]
-            return channelID
+            client_info = self.main_connection.whoami()
+            channel_id = client_info[0]["cid"]
+            return channel_id
         except Exception as e:
             print("couldn't get current channel id")
             raise e
-        return None
 
-    def getChannelID(self, clientID):
+    def get_channel_id(self, client_id):
         try:
-            clients = self.mainConnection.clientlist()
+            clients = self.main_connection.clientlist()
             for c in clients:
-                if c["clid"] == clientID:
+                if c["clid"] == client_id:
                     return c["cid"]
         except Exception as e:
             print("couldn't get channel id")
             raise e
         return None
 
-    def getDatabaseClientID(self):
+    def get_database_client_id(self):
         try:
-            clientID = self.getClientID()
+            client_id = self.get_client_id()
 
-            clientVariables = self.mainConnection.clientvariable(clientID, "client_database_id")
-            clientDatabaseID = clientVariables[0]["client_database_id"]
+            client_variables = self.main_connection.clientvariable(client_id, "client_database_id")
+            client_database_id = client_variables[0]["client_database_id"]
 
-            return clientDatabaseID
+            return client_database_id
         except Exception as e:
             print("couldn't get client database id")
             raise e
@@ -370,27 +362,27 @@ class ClientQuery:
     # eventlistening
     #
 
-    def registerForTextEvents(self):
+    def register_for_text_events(self):
         try:
-            self.listeningConnection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
+            self.listening_connection.clientnotifyregister(event="notifytextmessage", schandlerid=1)
         except Exception as e:
             print("couldn't register for text events from the teamspeak client")
             raise e
 
-    def listenForTextEvents(self, timeout=200):
+    def listen_for_text_events(self, timeout=200):
         try:
-            event = self.listeningConnection.wait_for_event(timeout=timeout)
+            event = self.listening_connection.wait_for_event(timeout=timeout)
         except:
-            self.listeningConnection.send_keepalive()
+            self.listening_connection.send_keepalive()
         else:
-            clientInfo = self.listeningConnection.whoami()
-            clientID = clientInfo[0]["clid"]
-            invokerID = event[0]["invokerid"]
+            client_info = self.listening_connection.whoami()
+            client_id = client_info[0]["clid"]
+            invoker_id = event[0]["invokerid"]
             msg = event[0]["msg"]
             if bot.debug:
-                print("received teamspeak message invokerid: " + invokerID + " msg: " + msg)
-                if not handleTeamspeakCommand(event):
+                print("received teamspeak message invokerid: " + invoker_id + " msg: " + msg)
+                if not handle_teamspeak_command(event):
                     return msg
-            elif invokerID != clientID:
-                if not handleTeamspeakCommand(event):
+            elif invoker_id != client_id:
+                if not handle_teamspeak_command(event):
                     return msg

@@ -1,12 +1,13 @@
 import os
 
+from contextlib import contextmanager
 from sys import platform
 
 
 class FileSystem:
 
     @staticmethod
-    def getDataFolderPath():
+    def get_data_folder_path():
         if platform == "linux" or platform == "linux2":
             path = os.getenv("HOME")
             path += os.path.sep
@@ -21,6 +22,8 @@ class FileSystem:
             path += "Preferences"
         elif platform == "win32":
             path = os.getenv("APPDATA")
+        else:
+            raise EnvironmentError("OS not recognizable")
 
         path += os.path.sep
         path += "ts3musicbot"
@@ -28,8 +31,8 @@ class FileSystem:
         return path
 
     @staticmethod
-    def getDataFilePath():
-        path = FileSystem.getDataFolderPath()
+    def get_data_file_path():
+        path = FileSystem.get_data_folder_path()
         if len(path) > 0:
             path += os.path.sep
         path += "data.json"
@@ -37,16 +40,17 @@ class FileSystem:
         return path
 
     @staticmethod
-    def getConfigFilePath():
-        path = FileSystem.getDataFolderPath()
+    def get_config_file_path():
+        path = FileSystem.get_data_folder_path()
         if len(path) > 0:
             path += os.path.sep
         path += "config.json"
 
         return path
 
-    def getLogFilePath():
-        path = FileSystem.getDataFolderPath()
+    @staticmethod
+    def get_log_file_path():
+        path = FileSystem.get_data_folder_path()
         if len(path) > 0:
             path += os.path.sep
         path += "log"
@@ -74,22 +78,26 @@ class Playlist:
         self.name = name
         self.songs = []
 
-    def addSong(self, song):
+    def add_song(self, song):
         self.songs.append(song)
 
-    def toJSON(self):
-        playlist = {}
-        playlist["name"] = self.name
-        playlist["songs"] = []
+    def to_json(self):
+        playlist = {
+            "name": self.name,
+            "songs": []
+        }
+
         for s in self.songs:
-            playlist["songs"].append(s.toJSON())
+            playlist["songs"].append(s.to_json())
 
         return playlist
 
-    def jsonToPlaylist(json):
+    @staticmethod
+    def json_to_playlist(json):
         playlist = Playlist(json["name"])
+
         for song in json["songs"]:
-            playlist.addSong(Song.jsonToSong(song))
+            playlist.add_song(Song.json_to_song(song))
 
         return playlist
 
@@ -100,15 +108,27 @@ class Song:
         self.url = url
         self.title = title
 
-    def toJSON(self):
-        song = {}
-        song["url"] = self.url
-        song["title"] = self.title
+    def to_json(self):
+        song = {
+            "url": self.url,
+            "title": self.title
+        }
 
         return song
 
-    def jsonToSong(json):
+    @staticmethod
+    def json_to_song(json):
         song = Song(json["url"])
         song.title = json["title"]
 
         return song
+
+
+class JSONData:
+
+    @contextmanager
+    def read(data, key):
+        try:
+            yield data[key]
+        except:
+            print("couldn't read " + key)

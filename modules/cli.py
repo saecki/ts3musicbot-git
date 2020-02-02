@@ -1,17 +1,18 @@
 import sys
 import urllib.request
-
 import vlc
+
 from bs4 import BeautifulSoup
 
 import ts3musicbot as bot
+
 from common.classes import Argument, FileSystem, Song, Command
 from common.constants import Args, ArgValues, Commands
 
 
 def run():
     print("starting cli")
-    bot.addThread(target=startCheckingForTerminalCommand, daemon=True)
+    bot.add_thread(target=start_checking_for_terminal_command, daemon=True)
     print("started cli")
 
 
@@ -27,24 +28,24 @@ def report(string):
 # terminal
 #
 
-def startCheckingForTerminalCommand():
+def start_checking_for_terminal_command():
     if bot.silent:
-        sys.stdout = open(FileSystem.getLogFilePath(), "a")
-        sys.stderr = open(FileSystem.getLogFilePath(), "a")
+        sys.stdout = open(FileSystem.get_log_file_path(), "a")
+        sys.stderr = open(FileSystem.get_log_file_path(), "a")
 
     while bot.running:
         string = input()
-        command = parseCommand(string)
+        command = parse_command(string)
         with bot.lock:
-            handleCommand(command)
+            handle_command(command)
 
 
 #
 # commands
 #
 
-def handleCommand(command, prefix=("",)):
-    if command != None:
+def handle_command(command, prefix=("",)):
+    if command is not None:
         startswithprefix = None
         for p in prefix:
             if command.name.startswith(p):
@@ -55,22 +56,22 @@ def handleCommand(command, prefix=("",)):
             if command.name in Commands.Exit:
                 bot.quit()
 
-        if startswithprefix != None:
+        if startswithprefix is not None:
             command.name = command.name[len(startswithprefix):]
             if command.name in Commands.Play:
                 play(command)
             elif command.name in Commands.PlayNext:
-                playNext(command)
+                play_next(command)
             elif command.name in Commands.PlayNow:
-                playNow(command)
+                play_now(command)
             elif command.name in Commands.PlayQueue:
-                playQueue(command)
+                play_queue(command)
             elif command.name in Commands.Remove:
                 remove(command)
             elif command.name in Commands.RemoveNext:
-                removeNext()
+                remove_next()
             elif command.name in Commands.RemoveCurrent:
-                removeCurrent()
+                remove_current()
             elif command.name in Commands.Pause:
                 pause()
             elif command.name in Commands.Toggle:
@@ -101,13 +102,15 @@ def handleCommand(command, prefix=("",)):
                 status()
             elif command.name in Commands.Playlist:
                 playlist(command)
+            elif command.name in Commands.Help:
+                help()
             else:
                 bot.report("the command: " + command.name + " wasn't found")
     else:
         bot.report("wow that's impressive")
 
 
-def parseCommand(string):
+def parse_command(string):
     if type(string) == str:
         string = string.rstrip()
         string = stripURL(string)
@@ -140,7 +143,7 @@ def parseCommand(string):
 # convenient
 #
 
-def getNumberFromString(string):
+def get_number_from_string(string):
     try:
         num = float(string)
     except:
@@ -160,14 +163,14 @@ def stripURL(string):
 # url
 #
 
-def isYoutubeURL(url):
+def is_youtube_url(url):
     if "https://youtu.be/" in url or "https://www.youtube.com/watch?v=" in url:
         return True
     else:
         return False
 
 
-def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=()):
+def get_command_args_as_string(args, start=0, startWithArgVal=False, end=None, till=()):
     length = len(args)
 
     if startWithArgVal:
@@ -189,7 +192,7 @@ def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=
                 msg += n + " "
 
             v = args[i].value
-            if v != None:
+            if v is not None:
                 if v in till:
                     break
                 else:
@@ -197,7 +200,7 @@ def getCommandArgsAsString(args, start=0, startWithArgVal=False, end=None, till=
     return msg
 
 
-def getYoutubeSongFromString(string):
+def get_youtube_song_from_string(string):
     try:
         query = urllib.parse.quote(string)
         url = "https://www.youtube.com/results?search_query=" + query
@@ -208,7 +211,7 @@ def getYoutubeSongFromString(string):
         for vid in soup.findAll(attrs={"class": "yt-uix-tile-link"}):
             youtubeUrl = "https://www.youtube.com" + vid["href"]
             title = vid["title"]
-            if isYoutubeURL(youtubeUrl):
+            if is_youtube_url(youtubeUrl):
                 song = Song(youtubeUrl, title=title)
                 return song
     except:
@@ -217,7 +220,7 @@ def getYoutubeSongFromString(string):
     return None
 
 
-def getTitleFromYoutubeURL(url):
+def get_title_from_youtube_url(url):
     try:
         response = urllib.request.urlopen(url)
         html = response.read()
@@ -230,45 +233,45 @@ def getTitleFromYoutubeURL(url):
     return None
 
 
-def getYoutubeSongFromPlayCommand(command):
+def get_youtube_song_from_play_command(command):
     url = command.args[0].name
-    if isYoutubeURL(url):
-        title = getTitleFromYoutubeURL(url)
-        if title != None:
+    if is_youtube_url(url):
+        title = get_title_from_youtube_url(url)
+        if title is not None:
             song = Song(url, title=title)
             return song
         else:
             bot.report("couldn't find the song")
     else:
-        string = getCommandArgsAsString(command.args)
-        song = getYoutubeSongFromString(string)
+        string = get_command_args_as_string(command.args)
+        song = get_youtube_song_from_string(string)
 
-        if song != None:
+        if song is not None:
             return song
         else:
             bot.report("couldn't find any youtube song")
     return None
 
 
-def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
-    string = getCommandArgsAsString(args, startWithArgVal=True, till=tillArg)
+def get_youtube_song_from_playlist_command(args, tillArg=None):
+    string = get_command_args_as_string(args, startWithArgVal=True, till=tillArg)
     url = args[0].value
-    if isYoutubeURL(url):
-        title = getTitleFromYoutubeURL(url)
+    if is_youtube_url(url):
+        title = get_title_from_youtube_url(url)
         song = Song(url, title=title)
         return song
     elif args[0].value in ArgValues.CurrentSong:
-        return bot.getCurrentSong()
-    elif getNumberFromString(string) != None:
-        return bot.getSong(int(getNumberFromString(args[0].value)))
+        return bot.get_current_song()
+    elif get_number_from_string(string) is not None:
+        return bot.get_song(int(get_number_from_string(args[0].value)))
     else:
         song = None
         for a in tillArg:
             if a in [a.name for a in args]:
-                song = getYoutubeSongFromString(string)
+                song = get_youtube_song_from_string(string)
                 break
 
-        if song != None:
+        if song is not None:
             return song
         else:
             bot.report("couldn't find any youtube song")
@@ -281,21 +284,21 @@ def getYoutubeSongFromPlaylistCommand(args, tillArg=None):
 # strings
 #
 
-def getStatus():
+def get_status():
     msg = "status:\n"
     msg += "playback state: " + str(bot.player.get_state()) + "\n"
-    if getCurrentSongTitle() != None:
-        msg += "title: " + getCurrentSongTitle() + "\n"
-        msg += "position: " + getPosition() + "\n"
-    msg += "speed: " + getSpeed() + "\n"
-    msg += "volume: " + getVolume() + "\n"
-    msg += "repeat: " + getRepeat() + "\n"
+    if get_current_song_title() is not None:
+        msg += "title: " + get_current_song_title() + "\n"
+        msg += "position: " + get_position() + "\n"
+    msg += "speed: " + get_speed() + "\n"
+    msg += "volume: " + get_volume() + "\n"
+    msg += "repeat: " + get_repeat() + "\n"
     msg += "index: " + str(bot.index) + "\n"
     msg += "songQueue length: " + str(len(bot.songQueue)) + "\n"
     return msg
 
 
-def getPlaybackInfo():
+def get_playback_info():
     msg = ""
 
     if len(bot.songQueue) > 0:
@@ -309,30 +312,30 @@ def getPlaybackInfo():
             msg = ""
 
         if bot.player.is_seekable():
-            msg += " | " + getPosition()
+            msg += " | " + get_position()
     return msg
 
 
-def getCurrentSongTitle():
-    song = bot.getCurrentSong()
-    if song != None:
+def get_current_song_title():
+    song = bot.get_current_song()
+    if song is not None:
         return song.title
     return None
 
 
-def getPosition():
+def get_position():
     return str(round(bot.player.get_position() * 100)) + "%"
 
 
-def getSpeed():
+def get_speed():
     return str(round(bot.player.get_rate() * 100)) + "%"
 
 
-def getVolume():
+def get_volume():
     return str(bot.player.audio_get_volume()) + "%"
 
 
-def getRepeat():
+def get_repeat():
     if bot.repeatSong == 0:
         return "none"
     elif bot.repeatSong == 1:
@@ -347,32 +350,32 @@ def getRepeat():
 
 def play(command):
     if len(command.args) > 0:
-        song = getYoutubeSongFromPlayCommand(command)
-        if song != None:
+        song = get_youtube_song_from_play_command(command)
+        if song is not None:
             bot.play(song)
     else:
         bot.play()
 
 
-def playNext(command):
+def play_next(command):
     if len(command.args) > 0:
-        song = getYoutubeSongFromPlayCommand(command)
-        if song != None:
-            bot.playNext(song)
+        song = get_youtube_song_from_play_command(command)
+        if song is not None:
+            bot.play_next(song)
     else:
         bot.report("not enough Args")
 
 
-def playNow(command):
+def play_now(command):
     if len(command.args) > 0:
-        song = getYoutubeSongFromPlayCommand(command)
-        if song != None:
-            bot.playNow(song)
+        song = get_youtube_song_from_play_command(command)
+        if song is not None:
+            bot.play_now(song)
     else:
         bot.report("not enough Args")
 
 
-def playQueue(command):
+def play_queue(command):
     if len(command.args) > 0:
         integer = True
 
@@ -383,7 +386,7 @@ def playQueue(command):
             bot.report("enter a valid number as argument")
 
         if integer:
-            bot.playQueue(index)
+            bot.play_queue(index)
 
 
 def remove(command):
@@ -400,12 +403,12 @@ def remove(command):
             bot.remove(index)
 
 
-def removeNext():
-    bot.removeNext()
+def remove_next():
+    bot.remove_next()
 
 
-def removeCurrent():
-    bot.removeCurrent()
+def remove_current():
+    bot.remove_current()
 
 
 def pause():
@@ -451,7 +454,7 @@ def list(command):
     bot.report(msg)
 
     if len(command.args) > 0 and command.args[0].name in ArgValues.All:
-        playlistListAll()
+        playlist_list_all()
 
 
 def repeat(command):
@@ -470,66 +473,66 @@ def position(command):
     if len(command.args) > 0:
         if command.args[0].name.startswith("+"):
             string = command.args[0].name[1:]
-            position = getNumberFromString(string)
+            position = get_number_from_string(string)
 
-            if position != None:
-                bot.plusPosition(position)
+            if position is not None:
+                bot.plus_position(position)
 
         elif command.args[0].name.startswith("-"):
             string = command.args[0].name[1:]
-            position = getNumberFromString(string)
+            position = get_number_from_string(string)
 
-            if position != None:
-                bot.minusPosition(position)
+            if position is not None:
+                bot.minus_position(position)
 
         else:
-            position = getNumberFromString(command.args[0].name)
-            if position != None:
-                bot.setPosition(position)
+            position = get_number_from_string(command.args[0].name)
+            if position is not None:
+                bot.set_position(position)
 
 
 def speed(command):
     if len(command.args) > 0:
         if command.args[0].name.startswith("+"):
             string = command.args[0].name[1:]
-            speed = getNumberFromString(string)
+            speed = get_number_from_string(string)
 
-            if speed != None:
-                bot.plusSpeed(speed)
+            if speed is not None:
+                bot.plus_speed(speed)
 
         elif command.args[0].name.startswith("-"):
             string = command.args[0].name[1:]
-            speed = getNumberFromString(string)
+            speed = get_number_from_string(string)
 
-            if speed != None:
-                bot.minusSpeed(speed)
+            if speed is not None:
+                bot.minus_speed(speed)
 
         else:
-            speed = getNumberFromString(command.args[0].name)
-            if speed != None:
-                bot.setSpeed(speed)
+            speed = get_number_from_string(command.args[0].name)
+            if speed is not None:
+                bot.set_speed(speed)
 
 
 def volume(command):
     if len(command.args) > 0:
         if command.args[0].name.startswith("+"):
             string = command.args[0].name[1:]
-            volume = getNumberFromString(string)
-            if volume != None:
-                bot.plusVolume(int(volume))
+            volume = get_number_from_string(string)
+            if volume is not None:
+                bot.plus_volume(int(volume))
                 return
 
         elif command.args[0].name.startswith("-"):
             string = command.args[0].name[1:]
-            volume = getNumberFromString(string)
-            if volume != None:
-                bot.minusVolume(int(volume))
+            volume = get_number_from_string(string)
+            if volume is not None:
+                bot.minus_volume(int(volume))
                 return
 
         else:
-            volume = getNumberFromString(command.args[0].name)
-            if volume != None:
-                bot.setVolume(int(volume))
+            volume = get_number_from_string(command.args[0].name)
+            if volume is not None:
+                bot.set_volume(int(volume))
                 return
     bot.report("specified arguments not correct or missing")
 
@@ -539,7 +542,7 @@ def lyrics(command):
 
 
 def status():
-    bot.report(getStatus())
+    bot.report(get_status())
 
 
 #
@@ -549,56 +552,56 @@ def status():
 def playlist(command):
     if len(command.args) > 0:
         if command.args[0].name in Args.Create:
-            playlistCreate(command.args)
+            playlist_create(command.args)
         elif command.args[0].name in Args.Delete:
-            playlistDelete(command.args)
+            playlist_delete(command.args)
         elif command.args[0].name in Args.Add:
-            playlistAdd(command.args)
+            playlist_add(command.args)
         elif command.args[0].name in Args.Remove:
-            playlistRemove(command.args)
+            playlist_remove(command.args)
         elif command.args[0].name in Args.Play:
-            playlistPlay(command.args)
+            playlist_play(command.args)
         elif command.args[0].name in Args.Queue:
-            playlistQueue(command.args)
+            playlist_queue(command.args)
         elif command.args[0].name in Args.Shuffle:
-            playlistShuffle(command.args)
+            playlist_shuffle(command.args)
         elif command.args[0].name in Args.Clear:
-            playlistClear(command.args)
+            playlist_clear(command.args)
         elif command.args[0].name in Args.List:
-            playlistList(command.args)
+            playlist_list(command.args)
         else:
             bot.report("argument " + command.args[0].name + " not found")
     else:
         bot.report("not enough Args")
 
 
-def playlistCreate(args):
+def playlist_create(args):
     name = args[0].value
     if len(args) > 1:
         if args[1].name in Args.From:
             if args[1].value in ArgValues.Queue:
-                bot.playlistCreateFromQueue(name)
+                bot.playlist_create_from_queue(name)
             else:
-                p = bot.getPlaylist(args[1].value)
-                if p != None:
-                    bot.playlistCreateFrom(name, p)
+                p = bot.get_playlist(args[1].value)
+                if p is not None:
+                    bot.playlist_create_from(name, p)
                 else:
                     bot.report("couldn't find playlist")
         else:
             bot.report("specified arguments not correct or missing")
     else:
-        bot.playlistCreate(name)
+        bot.playlist_create(name)
 
 
-def playlistDelete(args):
-    p = bot.getPlaylist(args[0].value)
-    if p != None:
-        bot.playlistDelete(p)
+def playlist_delete(args):
+    p = bot.get_playlist(args[0].value)
+    if p is not None:
+        bot.playlist_delete(p)
     else:
         bot.report("playlist not found")
 
 
-def playlistAdd(args):
+def playlist_add(args):
     if len(args) > 1:
         toArg = None
         for a in args:
@@ -606,10 +609,10 @@ def playlistAdd(args):
                 toArg = a
                 break
 
-        if toArg != None and toArg.value != None:
-            p = bot.getPlaylist(toArg.value)
-            if p != None:
-                _playlistAdd(p, args)
+        if toArg is not None and toArg.value is not None:
+            p = bot.get_playlist(toArg.value)
+            if p is not None:
+                _playlist_add(p, args)
             else:
                 bot.report("playlist not found")
         else:
@@ -618,10 +621,10 @@ def playlistAdd(args):
         bot.report("not enough Args")
 
 
-def _playlistAdd(playlist, args):
+def _playlist_add(playlist, args):
     name = args[0].value
     if name in ArgValues.Queue:
-        bot.playlistAddQueue(playlist)
+        bot.playlist_add_queue(playlist)
         return
 
     addedPlaylist = None
@@ -629,20 +632,20 @@ def _playlistAdd(playlist, args):
         if name == p.name:
             addedPlaylist = p
             break
-    if addedPlaylist != None:
-        bot.playlistAddPlaylist(addedPlaylist, playlist)
+    if addedPlaylist is not None:
+        bot.playlist_add_playlist(addedPlaylist, playlist)
         return
 
-    song = getYoutubeSongFromPlaylistCommand(args, tillArg=Args.To)
-    if song != None:
-        bot.playlistAdd(song, playlist)
+    song = get_youtube_song_from_playlist_command(args, tillArg=Args.To)
+    if song is not None:
+        bot.playlist_add(song, playlist)
 
 
-def playlistRemove(args):
+def playlist_remove(args):
     if len(args) > 1:
         if args[1].name in Args.From:
-            p = bot.getPlaylist(args[1].value)
-            if p != None:
+            p = bot.get_playlist(args[1].value)
+            if p is not None:
                 integer = True
 
                 try:
@@ -652,7 +655,7 @@ def playlistRemove(args):
                     bot.report("enter a valid number as argument")
 
                 if integer:
-                    bot.playlistRemove(index, p)
+                    bot.playlist_remove(index, p)
             else:
                 bot.report("playlist not found")
         else:
@@ -661,62 +664,66 @@ def playlistRemove(args):
         bot.report("not enough Args")
 
 
-def playlistPlay(args):
-    p = bot.getPlaylist(args[0].value)
-    if p != None:
-        bot.playlistPlay(p)
+def playlist_play(args):
+    p = bot.get_playlist(args[0].value)
+    if p is not None:
+        bot.playlist_play(p)
     else:
         bot.report("playlist not found")
 
 
-def playlistQueue(args):
-    p = bot.getPlaylist(args[0].value)
-    if p != None:
-        bot.playlistQueue(p)
+def playlist_queue(args):
+    p = bot.get_playlist(args[0].value)
+    if p is not None:
+        bot.playlist_queue(p)
     else:
         bot.report("playlist not found")
 
 
-def playlistShuffle(args):
-    p = bot.getPlaylist(args[0].value)
-    if p != None:
-        bot.playlistShuffle(p)
+def playlist_shuffle(args):
+    p = bot.get_playlist(args[0].value)
+    if p is not None:
+        bot.playlist_shuffle(p)
     else:
         bot.report("playlist not found")
 
 
-def playlistClear(args):
-    p = bot.getPlaylist(args[0].value)
-    if p != None:
-        bot.playlistClear(p)
+def playlist_clear(args):
+    p = bot.get_playlist(args[0].value)
+    if p is not None:
+        bot.playlist_clear(p)
     else:
         bot.report("playlist not found")
 
 
-def playlistList(args):
+def playlist_list(args):
     if args[0].value in ArgValues.All:
-        playlistListAll()
+        playlist_list_all()
     else:
-        p = bot.getPlaylist(args[0].value)
-        if p != None:
-            msg = playlistListPlaylist(p)
+        p = bot.get_playlist(args[0].value)
+        if p is not None:
+            msg = playlist_list_playlist(p)
             bot.report(msg)
         else:
             bot.report("playlist not found")
 
 
-def playlistListAll():
+def playlist_list_all():
     msg = "playlists:\n"
     for p in bot.playlists:
         msg += "\n"
-        msg += playlistListPlaylist(p)
+        msg += playlist_list_playlist(p)
     bot.report(msg)
 
 
-def playlistListPlaylist(playlist):
+def playlist_list_playlist(playlist):
     index = 0
     msg = playlist.name + "\n"
     for s in playlist.songs:
         msg += "(" + str(index) + ") " + s.title + " [url=" + s.url + "]URL[/url]\n"
         index += 1
     return msg
+
+
+def help():
+    print("help me")
