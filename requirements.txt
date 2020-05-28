@@ -1,6 +1,7 @@
-ts3query==2.0.1
-python_vlc==3.0.7110
+beautifulsoup4==4.9.1
 pafy==0.5.4
-youtube-dl==2020.1.24
-beautifulsoup4==4.8.2
-pyzmq==18.1.1
+python_vlc==3.0.7110
+pyzmq==19.0.1
+ts3query==2.0.1
+youtube-dl==2020.5.29
+
