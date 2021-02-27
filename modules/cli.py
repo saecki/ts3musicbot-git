@@ -1,3 +1,4 @@
+import re
 import sys
 import urllib.request
 import vlc
@@ -204,17 +205,18 @@ def get_youtube_song_from_string(string):
     try:
         query = urllib.parse.quote(string)
         url = "https://www.youtube.com/results?search_query=" + query
-        response = urllib.request.urlopen(url)
-        html = response.read()
-        soup = BeautifulSoup(html, "html.parser")
+        response = urllib.request.urlopen(url).read()
+        html = response.decode("utf-8")
 
-        for vid in soup.findAll(attrs={"class": "yt-uix-tile-link"}):
-            youtubeUrl = "https://www.youtube.com" + vid["href"]
-            title = vid["title"]
-            if is_youtube_url(youtubeUrl):
-                song = Song(youtubeUrl, title=title)
-                return song
-    except:
+        pattern = re.compile("\{\"videoRenderer\":\{\"videoId\":\"(.*?)\",(.*?)\"title\":\{\"runs\":\[{\"text\":\"(.*?)\"\}\],")
+        matches = re.findall(pattern, html)
+
+        video_id = matches[0][0]
+        url = "https://www.youtube.com/watch?v=" + video_id
+        title = matches[0][2].replace("\\", "")
+
+        return Song(url, title=title)
+    except Exception as e:
         bot.report("couldn't find youtube song")
 
     return None
@@ -225,11 +227,12 @@ def get_title_from_youtube_url(url):
         response = urllib.request.urlopen(url)
         html = response.read()
         soup = BeautifulSoup(html, "html.parser")
-        vid = soup.find(attrs={"id": "eow-title"})
-        title = vid["title"]
+        meta = soup.find(attrs={"name": "title"})
+        title = meta.get("content")
         return title
-    except Exception as e:
+    except:
         bot.report("couldn't get title from youtube url")
+
     return None
 
 
@@ -250,6 +253,7 @@ def get_youtube_song_from_play_command(command):
             return song
         else:
             bot.report("couldn't find any youtube song")
+
     return None
 
 
@@ -726,4 +730,4 @@ def playlist_list_playlist(playlist):
 
 
 def help():
-    print("help me")
+    bot.report("help me")
