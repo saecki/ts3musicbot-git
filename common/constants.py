@@ -2,6 +2,7 @@ class JSONFields:
     Playlists = "playlists"
     SongQueue = "songQueue"
     Index = "index"
+    Position = "position"
     RepeatSong = "repeatSong"
 
     ApiKey = "apikey"

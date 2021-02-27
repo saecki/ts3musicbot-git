@@ -25,6 +25,8 @@ player = None
 playlists = []
 songQueue = []
 index = 0
+lastPosition = None
+setLastPosition = None
 repeatSong = 0
 
 last_line = None
@@ -172,6 +174,7 @@ def write_data():
         JSONFields.Playlists: [],
         JSONFields.SongQueue: [],
         JSONFields.Index: index,
+        JSONFields.Position: player.get_position(),
         JSONFields.RepeatSong: repeatSong
     }
 
@@ -191,6 +194,7 @@ def write_data():
 def read_data():
     global playlists
     global index
+    global lastPosition
     global repeatSong
 
     try:
@@ -209,6 +213,9 @@ def read_data():
                 index = json_field
                 if json_field >= len(songQueue) and json_field != 0:
                     index = len(songQueue) - 1
+
+            with JSONData.read(data, JSONFields.Position) as json_field:
+                lastPosition = json_field
 
             with JSONData.read(data, JSONFields.RepeatSong) as json_field:
                 repeatSong = json_field
@@ -281,6 +288,9 @@ def play_song():
 
 
 def play_audio_from_song(song):
+    global lastPosition
+    global setLastPosition
+
     try:
         play_url = get_best_youtube_audio_url(song.url)
 
@@ -288,10 +298,15 @@ def play_audio_from_song(song):
         media.get_mrl()
         player.set_media(media)
         player.play()
+        if setLastPosition != None:
+            player.set_position(setLastPosition)
+            setLastPosition = None
         report("playing " + song.title + " [url=" + song.url + "]URL[/url]")
     except:
         create_vlc_player()
         report("couldn't play song " + song.title + " [url=" + song.url + "]URL[/url]")
+
+    lastPosition = None
 
 
 def is_playing_or_paused():
@@ -307,7 +322,7 @@ def set_position(position):
     try:
         for i in range(0, 5):
             if player.set_position(
-                    position) is None:  # Should be checking for 0 but this library is shit and returns None
+                    position) is None:
                 time.sleep(0.1)
                 report("set position to " + str(round(player.get_position() * 100)) + "%")
                 return
@@ -372,11 +387,18 @@ def minus_volume(volume):
 #
 
 def play(song=None):
+    global lastPosition
+    global setLastPosition
+
+    lp = lastPosition
+
     if song == None:
         if player.get_state() == vlc.State.Paused:
             player.play()
             report("resumed")
         elif player.get_state() != vlc.State.Playing:
+            if lp != None:
+                setLastPosition = lp
             play_song()
         else:
             report("already playing")
